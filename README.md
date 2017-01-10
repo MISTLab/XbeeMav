@@ -108,8 +108,10 @@ The configuration will be loaded from "Resources/Xbee_Config.xml". Most of the e
 ## Test two Xbee devices
 
 We consider the following setup (**Fig.1**). The block (Drone + Manifold) can be replaced by any Desktop/Laptop meeting the prerequisites.
- 
-**Fig.1:** Experimental Setup.
+
+**Fig.1:** Experimental Setup:
+![][fig1]
+[fig1]: https://github.com/MISTLab/XbeeMav/tree/master/Resources/Fig1.png "Fig.1"
 
 One of the drones will behave as a Master while the other one will act as a Slave. The Master drone will send commands to the Slave drone.
 Each drone is running a dummy flight controller node "test_controller". According to the drone type Master/Slave, the "test_controller" node will respectively send or receive and display a command. The commands in the Master drone will be introduced with the keyboard. When a command is received in the Slave drone, it will be printed on the screen. The following table (**Table.2**) depicts the keys of each command:
@@ -126,7 +128,9 @@ Each drone is running a dummy flight controller node "test_controller". Accordin
 | 23	| Start Mission |
 
 
-**Fig.2:** ROS nodes running on the drone.
+**Fig.2:** ROS nodes running on the drone:
+![][fig2]
+[fig2]: https://github.com/MISTLab/XbeeMav/tree/master/Resources/Fig1.png "Fig.2"
 
 The communication between both drones is performed with Xbees. The “xbee_mav” node (**Fig.2**) will handle all communications with other ROS nodes (test_controller(Flight Controller) or test_buzz (ROS Buzz)) and the connected Xbee device. Therefore, both Xbees must be configured for Digi-Mesh with the maximum baud rate (230400).
 We recognize two modes of communications:
