@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>xbee_ros_node</name>
+  <version>1.0.2</version>
+  <description>The xbee_ros_node package</description>
+
+  <maintainer email="aymen.soussia@gmail.com">aymen</maintainer>
+
+  <license>Boost Software License</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+
+  <export>
+  </export>
+</package>

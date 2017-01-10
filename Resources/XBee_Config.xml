@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<XBeeConfig>
+    <Settings>
+		<Parameter Command="CM" Description="Channel Mask">00FFFFFFFFFFFF7FFF</Parameter>
+		<Parameter Command="HP" Description="Preamble ID">1</Parameter>
+		<Parameter Command="ID" Description="Network ID">5FFF</Parameter>
+		<Parameter Command="MT" Description="Broadcast Multi-Transmits">3</Parameter>
+		<Parameter Command="PL" Description="TX Power Level">4</Parameter>
+		<Parameter Command="RR" Description="Unicast Retries">A</Parameter>
+		<Parameter Command="CE" Description="Routing/Messaging Mode">0</Parameter>
+		<Parameter Command="BH" Description="Broadcast Hops">0</Parameter>
+		<Parameter Command="NH" Description="Network Hops">7</Parameter>
+		<Parameter Command="MR" Description="Mesh Unicast Retries">1</Parameter>
+		<Parameter Command="NN" Description="Network Delay Slots">3</Parameter>
+		<Parameter Command="DH" Description="Destination Address High">0</Parameter>
+		<Parameter Command="DL" Description="Destination Address Low">FFFF</Parameter>
+		<Parameter Command="TO" Description="Transmit Options">C0</Parameter>
+		<Parameter Command="NI" Description="Node Identifier">'Node 1'</Parameter>
+		<Parameter Command="NT" Description="Network Dsicovery Back-Off">82</Parameter>
+		<Parameter Command="NO" Description="Network Dsicovery Options">0</Parameter>
+		<Parameter Command="CI" Description="Cluster ID">11</Parameter>
+		<Parameter Command="EE" Description="Encryption Enbale">0</Parameter>
+		<Parameter Command="KY" Description="Encryption Key"></Parameter>
+		<Parameter Command="BD" Description="Baud Rate">8</Parameter>
+		<Parameter Command="NB" Description="Parity">0</Parameter>
+		<Parameter Command="SB" Description="Stop Bits">0</Parameter>
+		<Parameter Command="RO" Description="Packetization Timeout">3</Parameter>
+		<Parameter Command="FT" Description="Flow Control Threshold">13F</Parameter>
+		<Parameter Command="AP" Description="API Enable">1</Parameter>
+		<Parameter Command="AO" Description="API Options">0</Parameter>
+		<Parameter Command="D0" Description="DIO0/AD0">1</Parameter>
+		<Parameter Command="D1" Description="DIO1/AD1/SPI_ATTN">0</Parameter>
+		<Parameter Command="D2" Description="DIO2/AD2/SPI_SCLK">0</Parameter>
+		<Parameter Command="D3" Description="DIO3/AD3/SPI_SSEL">0</Parameter>
+		<Parameter Command="D4" Description="DIO4">0</Parameter>
+		<Parameter Command="D5" Description="DIO5/ASSOCIATED_INDICATOR">1</Parameter>
+		<Parameter Command="D6" Description="DIO6/RTS">0</Parameter>
+		<Parameter Command="D7" Description="DIO7/CTS">1</Parameter>
+		<Parameter Command="D8" Description="DIO8/SLEEP_REQUEST">1</Parameter>
+		<Parameter Command="D9" Description="DIO9/ON_SLEEP">1</Parameter>
+		<Parameter Command="P0" Description="DIO10/RSSI/PWM0">1</Parameter>
+		<Parameter Command="P1" Description="DIO11/PWM1">0</Parameter>
+		<Parameter Command="P2" Description="DIO12">0</Parameter>
+		<Parameter Command="P3" Description="DIO13/DOUT">1</Parameter>
+		<Parameter Command="P4" Description="DIO14/DIN">1</Parameter>
+		<Parameter Command="PD" Description="Pull Direction">7FFF</Parameter>
+		<Parameter Command="PR" Description="Pull-Up/Down Resistor">7FFF</Parameter>
+		<Parameter Command="M0" Description=" PWM0 Duty Cycle">0</Parameter>
+		<Parameter Command="M1" Description="PWM1 Duty Cycle">0</Parameter>
+		<Parameter Command="LT" Description="Associate LED Blink Time">0</Parameter>
+		<Parameter Command="RP" Description="RSSI PWM Timer">28</Parameter>
+		<Parameter Command="AV" Description="Analog Voltage Reference">1</Parameter>
+		<Parameter Command="IC" Description="DIO Change Detect">0</Parameter>
+		<Parameter Command="IF" Description="Sleep Sample Rate">1</Parameter>
+		<Parameter Command="IR" Description="Sample Rate">0</Parameter>
+		<Parameter Command="SM" Description="Sleep Mode">0</Parameter>
+		<Parameter Command="SO" Description="Sleep Options">2</Parameter>
+		<Parameter Command="SN" Description="Nu,ber of Cycles between On/Sleep">1</Parameter>
+		<Parameter Command="SP" Description="Sleep Time">12C</Parameter>
+		<Parameter Command="ST" Description="Wake Time">BB8</Parameter>
+		<Parameter Command="WH" Description="Wake Host Delay">0</Parameter>
+		<Parameter Command="CC" Description="Commande Sequence Character">2B</Parameter>
+		<Parameter Command="CT" Description="Command Mode Time Out">60</Parameter>
+		<Parameter Command="GT" Description="Guard Time">3E8</Parameter>
+		<Parameter Command="DD" Description="Device Type Identifier">B0000</Parameter>
+    </Settings>
+</XBeeConfig>
