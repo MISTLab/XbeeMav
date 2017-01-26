@@ -531,7 +531,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		uint16_t check_sum = (uint16_t)Caculate_Checksum(&frame);
 		uint16_t cnt=0;
 		uint16_t number=1;
-		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)20));
+		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)10));
 		std::cout <<"Payload size" <<mavlink_msg->payload64.size() << std::endl;
 		uint64_t header = (uint64_t)0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
 		std::cout << "Total chunks:" <<total << std::endl;
@@ -546,7 +546,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		for (int i =0; i<mavlink_msg->payload64.size(); i++)
 		{
 			
-			if(cnt<20){
+			if(cnt<10){
 				converted_bytes += sprintf(
 				temporary_buffer+converted_bytes, "%" PRIu64 " ",
 				(uint64_t)mavlink_msg->payload64.at(i));
@@ -560,6 +560,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				cnt=0;
 				frame = "";
 				header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+				std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 				memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
 				converted_bytes = sprintf(
 						temporary_buffer, "%" PRIu64 " ",
