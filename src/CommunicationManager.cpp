@@ -9,6 +9,19 @@
 #include "CommunicationManager.h"
 
 
+uint16_t* u64_cvt_u16(uint64_t u64){
+   uint16_t* out = new uint16_t[4];
+   uint32_t int32_1 = u64 & 0xFFFFFFFF;
+   uint32_t int32_2 = (u64 & 0xFFFFFFFF00000000 ) >> 32;
+    out[0] = int32_1 & 0xFFFF;
+    out[1] = (int32_1 & (0xFFFF0000) ) >> 16;
+    out[2] = int32_2 & 0xFFFF;
+    out[3] = (int32_2 & (0xFFFF0000) ) >> 16;
+   //cout << " values " <<out[0] <<"  "<<out[1] <<"  "<<out[2] <<"  "<<out[3] <<"  ";
+return out;
+
+}
+
 namespace Mist
 {
 
@@ -294,6 +307,22 @@ inline void CommunicationManager::Calculate_and_Append_Checksum(
 	frame->push_back(checksum_byte);
 }
 
+unsigned short CommunicationManager::Caculate_Checksum(std::string* frame)
+{
+
+	unsigned short bytes_sum = 0;
+	unsigned lowest_8_bits = 0;
+	unsigned short checksum = 0;
+	unsigned char checksum_byte;
+
+	for (unsigned short i = 0; i < frame->size(); i++)
+		bytes_sum += static_cast<unsigned short>(frame->at(i));
+
+	lowest_8_bits = bytes_sum & 0xFF;
+	checksum = 0xFF - lowest_8_bits;
+	
+return checksum;
+}
 
 //*****************************************************************************
 inline void CommunicationManager::Add_Length_and_Start_Delimiter(
@@ -323,29 +352,99 @@ inline void CommunicationManager::Add_Length_and_Start_Delimiter(
 inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 {
 	std::size_t size_in_messages = in_messages_->Get_Size();
-	
+	uint16_t* header;
 	if (size_in_messages > 0)
 	{
 		uint64_t current_int64 = 0;
-
+		uint16_t checksum_cur;
+		std::vector<uint64_t> msgs;
+		int cur_pos;
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
 			std::shared_ptr<std::string> in_message =
 					in_messages_->Pop_Front();
 			mavros_msgs::Mavlink mavlink_msg;
 			
-			for (std::size_t i = 0; i < in_message->size(); i++)
-			{
-				if (' ' == in_message->at(i) || 0 == i)
-				{
-					sscanf(in_message->c_str() + i, "%" PRIu64 " ",
+			//uint64_t header=0;
+			sscanf(in_message->c_str(), "%" PRIu64 " ",
 							&current_int64);
-					mavlink_msg.payload64.push_back(current_int64);
-				}
-		
-			}
+			header = u64_cvt_u16(current_int64);
+			uint16_t checksum_cur=header[1];
 			
-			mavlink_publisher_.publish(mavlink_msg);
+			if(header[3]==1){
+				for (std::size_t i = 1; i < in_message->size(); i++)
+				{
+				
+					if (' ' == in_message->at(i) || 0 == i)
+					{
+						sscanf(in_message->c_str() + i, "%" PRIu64 " ",
+								&current_int64);
+						mavlink_msg.payload64.push_back(current_int64);
+					}
+		
+				}
+				std::cout << "Single packet message" << std::endl;
+				mavlink_publisher_.publish(mavlink_msg);
+				delete[] header;
+			}
+			else{
+				std::cout << "Multi packet message" << std::endl;
+				if (msgs.size()==0 && header[2]==1){
+				std::cout << "first message" << std::endl;
+					checksum_cur=header[1];
+					cur_pos=header[2]+1;
+					for (std::size_t i = 1; i < in_message->size(); i++)
+					{
+						if (' ' == in_message->at(i) || 0 == i)
+						{
+							sscanf(in_message->c_str() + i, "%" PRIu64 " ",
+									&current_int64);
+							msgs.push_back(current_int64);
+						}
+		
+					}
+				delete[] header;
+					
+				}
+				else if(msgs.size() > 0 && header[1] == checksum_cur && (cur_pos == header[2])){
+					
+					for (std::size_t i = 1; i < in_message->size(); i++)
+					{
+						if (' ' == in_message->at(i) || 0 == i)
+						{
+							sscanf(in_message->c_str() + i, "%" PRIu64 " ",
+									&current_int64);
+							msgs.push_back(current_int64);
+						}
+		
+					}
+					std::cout << "Correspoding Packet" << std::endl;
+					cur_pos++;
+					if(msgs.size()==header[3]){
+						for (std::size_t i = 0; i < msgs.size(); i++)
+						{
+							mavlink_msg.payload64.push_back(msgs[i]);		
+						}
+						mavlink_publisher_.publish(mavlink_msg);
+						delete[] header;
+						msgs.clear();
+						checksum_cur=0;
+						cur_pos=0;
+						std::cout << "Last packet received sucessfully" << std::endl;
+
+					}
+				delete[] header;
+				}
+				 
+				else {
+					msgs.clear();
+					cur_pos=0;
+					checksum_cur=0;
+					std::cout << "Wrong ordered message" << std::endl;
+					delete[] header;
+					
+				}
+			}
 		}
 		
 	}
@@ -398,13 +497,13 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
 	const unsigned short MAX_BUFFER_SIZE = 211; /* 20 (length(uint64_t)) * 10 (max int number) + 10 (spaces) + 1 */
-	const unsigned short MAX_NBR_OF_INT64 = 10;
+	const unsigned short MAX_NBR_OF_INT64 = 20;
 	char temporary_buffer[MAX_BUFFER_SIZE];
 	std::string frame;
 	int converted_bytes = 0;
 
 	/* Check the payload is not too long. Otherwise ignore it. */
-	if (mavlink_msg->payload64.size() <= MAX_NBR_OF_INT64)
+/*	if (mavlink_msg->payload64.size() <= MAX_NBR_OF_INT64)
 	{
 		for (unsigned short i = 0; i < mavlink_msg->payload64.size(); i++)
 		{
@@ -417,6 +516,52 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 		serial_device_.Send_Frame(frame);
 	}
+	else
+	{*/
+		char temporary_buffer_check[6000];
+		for(int i=0; i<mavlink_msg->payload64.size(); i++)
+		{
+			converted_bytes += sprintf(
+				temporary_buffer_check + converted_bytes, "%" PRIu64 " ",
+				(uint64_t)mavlink_msg->payload64.at(i));
+			
+		}
+		frame.append(temporary_buffer_check, std::strlen(temporary_buffer_check));
+		uint16_t check_sum = (uint16_t)Caculate_Checksum(&frame);
+		uint16_t cnt=0;
+		uint16_t number=1;
+		uint16_t total =ceil((double)(mavlink_msg->payload64.size()/20));
+		uint64_t header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+		//temporary_buffer[MAX_BUFFER_SIZE]="";
+		frame="";
+		converted_bytes= sprintf(
+				temporary_buffer,  "%" PRIu64 " ",
+				(uint64_t)header);		
+		for (int i =0; i<mavlink_msg->payload64.size(); i++)
+		{
+			if(cnt<20){
+				converted_bytes += sprintf(
+				temporary_buffer+converted_bytes, "%" PRIu64 " ",
+				(uint64_t)mavlink_msg->payload64.at(i));
+				cnt++;
+			}	
+			else
+			{
+				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+				serial_device_.Send_Frame(frame);
+				number++;
+				cnt=0;
+				frame = "";
+				header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+				memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
+				converted_bytes = sprintf(
+						temporary_buffer, "%" PRIu64 " ",
+						(uint64_t)header);
+					
+			}
+		}
+	
+	//}
 }
 
 

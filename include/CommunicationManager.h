@@ -80,7 +80,7 @@ private:
 	bool Serve_Flight_Controller(mavros_msgs::CommandInt::
 		Request& request, mavros_msgs::CommandInt::Response& response);
 	void Check_In_Messages_and_Transfer_To_Server();
-
+	unsigned short Caculate_Checksum(std::string* frame);
 	Mist::Xbee::SerialDevice serial_device_;
 	Thread_Safe_Deque* in_messages_;
 	ros::NodeHandle node_handle_;
