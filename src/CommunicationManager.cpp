@@ -370,7 +370,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 							&current_int64);
 			header = u64_cvt_u16(current_int64);
 			uint16_t checksum_cur=header[1];
-			std::cout << "Received header" <<header[0] <<header[1] << header[2]<< header[3]<< std::endl;
+			std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
 			if(header[3]==1){
 				for (std::size_t i = 1; i < in_message->size(); i++)
 				{
@@ -533,13 +533,16 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		uint16_t number=1;
 		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)20));
 		std::cout <<"Payload size" <<mavlink_msg->payload64.size() << std::endl;
-		uint64_t header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+		uint64_t header = (uint64_t)0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
 		std::cout << "Total chunks:" <<total << std::endl;
 		//temporary_buffer[MAX_BUFFER_SIZE]="";
 		frame="";
+		uint16_t* header_16 = u64_cvt_u16(header);
+		std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 		converted_bytes= sprintf(
 				temporary_buffer,  "%" PRIu64 " ",
 				(uint64_t)header);	
+		delete[] header_16;
 		for (int i =0; i<mavlink_msg->payload64.size(); i++)
 		{
 			
