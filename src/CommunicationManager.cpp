@@ -530,15 +530,18 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		uint16_t check_sum = (uint16_t)Caculate_Checksum(&frame);
 		uint16_t cnt=0;
 		uint16_t number=1;
-		uint16_t total =ceil((double)(mavlink_msg->payload64.size()/20));
+		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)20));
+		std::cout <<"Payload size" <<mavlink_msg->payload64.size() << std::endl;
 		uint64_t header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+		std::cout << "Total chunks:" <<total << std::endl;
 		//temporary_buffer[MAX_BUFFER_SIZE]="";
 		frame="";
 		converted_bytes= sprintf(
 				temporary_buffer,  "%" PRIu64 " ",
-				(uint64_t)header);		
+				(uint64_t)header);	
 		for (int i =0; i<mavlink_msg->payload64.size(); i++)
 		{
+			
 			if(cnt<20){
 				converted_bytes += sprintf(
 				temporary_buffer+converted_bytes, "%" PRIu64 " ",
@@ -557,10 +560,15 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				converted_bytes = sprintf(
 						temporary_buffer, "%" PRIu64 " ",
 						(uint64_t)header);
+	
 					
 			}
 		}
-	
+                if(total==1){
+		std::cout << "Single frame" << std::endl;
+		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+				serial_device_.Send_Frame(frame);
+		}
 	//}
 }
 
