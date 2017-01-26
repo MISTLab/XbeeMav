@@ -370,7 +370,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 							&current_int64);
 			header = u64_cvt_u16(current_int64);
 			uint16_t checksum_cur=header[1];
-			
+			std::cout << "Received header" <<header[0] <<header[1] << header[2]<< header[3]<< std::endl;
 			if(header[3]==1){
 				for (std::size_t i = 1; i < in_message->size(); i++)
 				{
@@ -383,12 +383,13 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					}
 		
 				}
-				std::cout << "Single packet message" << std::endl;
+				std::cout << "Single packet message received" << std::endl;
 				mavlink_publisher_.publish(mavlink_msg);
 				delete[] header;
 			}
 			else{
 				std::cout << "Multi packet message" << std::endl;
+				
 				if (msgs.size()==0 && header[2]==1){
 				std::cout << "first message" << std::endl;
 					checksum_cur=header[1];
@@ -549,7 +550,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				cnt++;
 			}	
 			else
-			{
+			{	std::cout << "Multi frame sent no:"<<number << std::endl;
 				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
 				number++;
