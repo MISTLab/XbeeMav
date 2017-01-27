@@ -414,13 +414,15 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						
 						for(int i =1; i<=header[3];i++){
 							it = multi_msgs.find(i);
+							std::cout<<"Transfering to topic chunk no. :"<<i << "Size of current map" <<it->second->size();
 								for (int j = 1; j < it->second->size(); j++)
 								{
+									
 				
 									if (' ' == it->second->at(j) || 0 == j)
 									{
 										sscanf(it->second->c_str() + j, "%" PRIu64 " ",
-												&current_int64);
+												&current_int64); 
 										mavlink_msg.payload64.push_back(current_int64);
 									}
 		
