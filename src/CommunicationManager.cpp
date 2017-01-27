@@ -385,12 +385,12 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			}
 			else{
 				std::cout << "Multi packet message" << std::endl;
-				if (multi_msgs.empty()){
+				if (multi_msgs.empty() && header[0] == 0){
 				std::cout << "first message" << std::endl;
 				multi_msgs.insert(make_pair(header[2], in_message));
 				cur_checksum=header[1];
 				}
-				else if (header[1]==cur_checksum) {
+				else if (header[1]==cur_checksum && header[0] == 0) {
 					std::map< int, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
 					if(it!=multi_msgs.end())
 						multi_msgs.erase(it);
@@ -552,6 +552,10 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
                 if(total==1){
 		std::cout << "Single frame" << std::endl;
 		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+				serial_device_.Send_Frame(frame);
+		}
+		if(number==total){
+		 Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
 		}
 		
