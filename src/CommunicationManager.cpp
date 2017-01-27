@@ -415,9 +415,9 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						for(uint16_t i =1; i<=header[3];i++){
 							it = multi_msgs.find(i);
 							std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
-							std::cout << "received Frame:"<<it->second << std::endl;	
+							std::cout << "received Frame:"<<(void *) it->second->c_str() << std::endl;	
 							std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
-								for (std::size_t j = 1; j < it->second->size(); j++)
+								for (std::size_t j = 1; j < it->second->size()-1; j++)
 								{
 									
 				
@@ -425,6 +425,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 									{
 										sscanf(it->second->c_str() + j, "%" PRIu64 " ",
 												&current_int64); 
+										std::cout << "received Frame:" << current_int64 << std::endl;
 										mavlink_msg.payload64.push_back(current_int64);
 									}
 		
@@ -546,6 +547,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				converted_bytes += sprintf(
 				temporary_buffer+converted_bytes, "%" PRIu64 " ",
 				(uint64_t)mavlink_msg->payload64.at(i));
+				std::cout << "Frame:"<<mavlink_msg->payload64.at(i) << std::endl;
 				
 			}	
 
