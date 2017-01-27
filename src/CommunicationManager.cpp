@@ -355,8 +355,8 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 	uint16_t* header;
 	if (size_in_messages > 0)
 	{
-		//steps++;
-		//if(steps==100) steps=0;
+		steps++;
+		if(steps==100) steps=0;
 		uint64_t current_int64 = 0;
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
@@ -385,10 +385,10 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				mavlink_publisher_.publish(mavlink_msg);
 				delete[] header;
 			}
-			else{
+			else if (header[3]>1){
 				std::cout << "Multi packet: check_cur:"<<cur_checksum<< std::endl;
 				
-				if (multi_msgs.end()==0){
+				if (multi_msgs.empty()){
 				std::cout << "first message" << std::endl;
 				multi_msgs.insert(make_pair(header[2], in_message));
 				cur_checksum=header[1];
