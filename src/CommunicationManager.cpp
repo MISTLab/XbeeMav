@@ -388,7 +388,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			else{
 				std::cout << "Multi packet: check_cur:"<<cur_checksum<< std::endl;
 				
-				if (multi_msgs.empty()){
+				if (multi_msgs.end()==0){
 				std::cout << "first message" << std::endl;
 				multi_msgs.insert(make_pair(header[2], in_message));
 				cur_checksum=header[1];
