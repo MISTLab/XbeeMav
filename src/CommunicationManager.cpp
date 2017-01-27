@@ -386,14 +386,15 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				delete[] header;
 			}
 			else{
-				std::cout << "Multi packet message" << std::endl;
-				if (multi_msgs.empty() && header[0] == 0){
+				std::cout << "Multi packet: check_cur:"<<cur_checksum<< std::endl;
+				
+				if (multi_msgs.empty()){
 				std::cout << "first message" << std::endl;
 				multi_msgs.insert(make_pair(header[2], in_message));
 				cur_checksum=header[1];
 				counter=1;
 				}
-				else if (header[1]==cur_checksum && header[0] == 0) {
+				else if (header[1]==cur_checksum) {
 					std::map< int, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
 					if(it!=multi_msgs.end()){
 						multi_msgs.erase(it);
