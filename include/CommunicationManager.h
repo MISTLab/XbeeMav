@@ -88,6 +88,11 @@ private:
 	ros::Publisher mavlink_publisher_;
 	ros::ServiceClient mav_dji_client_;
 	ros::ServiceServer mav_dji_server_;
+        /*Vector msgs*/
+	std::map< int, std::shared_ptr<std::string> > multi_msgs;
+	std::vector<uint16_t> multi_msgs_available;
+	uint16_t cur_checksum;
+	//uint16_t multi_msg_size;
 };
 
 

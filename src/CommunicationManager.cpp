@@ -356,9 +356,6 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 	if (size_in_messages > 0)
 	{
 		uint64_t current_int64 = 0;
-		uint16_t checksum_cur;
-		std::vector<uint64_t> msgs;
-		int cur_pos;
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
 			std::shared_ptr<std::string> in_message =
@@ -369,7 +366,6 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			sscanf(in_message->c_str(), "%" PRIu64 " ",
 							&current_int64);
 			header = u64_cvt_u16(current_int64);
-			uint16_t checksum_cur=header[1];
 			std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
 			if(header[3]==1){
 				for (std::size_t i = 1; i < in_message->size(); i++)
@@ -389,62 +385,42 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			}
 			else{
 				std::cout << "Multi packet message" << std::endl;
-				
-				if (msgs.size()==0 && header[2]==1){
+				if (multi_msgs.size()==0 ){
 				std::cout << "first message" << std::endl;
-					checksum_cur=header[1];
-					cur_pos=header[2]+1;
-					for (std::size_t i = 1; i < in_message->size(); i++)
-					{
-						if (' ' == in_message->at(i) || 0 == i)
-						{
-							sscanf(in_message->c_str() + i, "%" PRIu64 " ",
-									&current_int64);
-							msgs.push_back(current_int64);
-						}
+				multi_msgs.insert(make_pair(header[2], in_message));
+				cur_checksum=header[1];
+				}
+				else if (header[1]==cur_checksum) {
+					std::map< int, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
+					if(it!=multi_msgs.end())
+						multi_msgs.erase(it);
+					multi_msgs.insert(make_pair(header[2], in_message));					
+					/*If the total size of msg reached transfer to topic*/
+					if(multi_msgs.size()==header[3]){
+						
+						for(int i =1; i<header[3]+1;i++){
+							it = multi_msgs.find(i);
+								for (int j = 1; j < it->second->size(); j++)
+								{
+				
+									if (' ' == it->second->at(j) || 0 == j)
+									{
+										sscanf(it->second->c_str() + j, "%" PRIu64 " ",
+												&current_int64);
+										mavlink_msg.payload64.push_back(current_int64);
+									}
 		
-					}
-				delete[] header;
-					
-				}
-				else if(msgs.size() > 0 && header[1] == checksum_cur && (cur_pos == header[2])){
-					
-					for (std::size_t i = 1; i < in_message->size(); i++)
-					{
-						if (' ' == in_message->at(i) || 0 == i)
-						{
-							sscanf(in_message->c_str() + i, "%" PRIu64 " ",
-									&current_int64);
-							msgs.push_back(current_int64);
+								}
 						}
-		
+						
+					std::cout << "one multi message published in topic" << std::endl;
+					mavlink_publisher_.publish(mavlink_msg);
+					multi_msgs.clear();
+					cur_checksum=0;
 					}
-					std::cout << "Correspoding Packet" << std::endl;
-					cur_pos++;
-					if(msgs.size()==header[3]){
-						for (std::size_t i = 0; i < msgs.size(); i++)
-						{
-							mavlink_msg.payload64.push_back(msgs[i]);		
-						}
-						mavlink_publisher_.publish(mavlink_msg);
-						delete[] header;
-						msgs.clear();
-						checksum_cur=0;
-						cur_pos=0;
-						std::cout << "Last packet received sucessfully" << std::endl;
-
-					}
-				delete[] header;
-				}
-				 
-				else {
-					msgs.clear();
-					cur_pos=0;
-					checksum_cur=0;
-					std::cout << "Wrong ordered message" << std::endl;
-					delete[] header;
 					
 				}
+				delete[] header;
 			}
 		}
 		
