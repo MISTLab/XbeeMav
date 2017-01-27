@@ -399,7 +399,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				counter=1;
 				}
 				else if (header[1]==cur_checksum) {
-					std::map< int, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
+					std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
 					if(it!=multi_msgs.end()){
 						multi_msgs.erase(it);
 						multi_msgs.insert(make_pair(header[2], in_message));
@@ -412,10 +412,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					/*If the total size of msg reached transfer to topic*/
 					if(counter==header[3]){
 						
-						for(int i =1; i<=header[3];i++){
+						for(uint16_t i =1; i<=header[3]+1;i++){
 							it = multi_msgs.find(i);
-							std::cout<<"Transfering to topic chunk no. :"<<i << "Size of current map" <<it->second->size();
-								for (int j = 1; j < it->second->size(); j++)
+							std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
+							std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
+								for (std::size_t j = 1; j < it->second->size(); j++)
 								{
 									
 				
@@ -513,7 +514,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 	else
 	{*/
 		char temporary_buffer_check[6000];
-		for(int i=0; i<mavlink_msg->payload64.size(); i++)
+		for(std::size_t i=0; i<mavlink_msg->payload64.size(); i++)
 		{
 			converted_bytes += sprintf(
 				temporary_buffer_check + converted_bytes, "%" PRIu64 " ",
@@ -536,7 +537,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				temporary_buffer,  "%" PRIu64 " ",
 				(uint64_t)header);	
 		delete[] header_16;
-		for (int i =0; i<mavlink_msg->payload64.size(); i++)
+		for (std::size_t i =0; i<mavlink_msg->payload64.size(); i++)
 		{
 			
 			if(cnt<10){
