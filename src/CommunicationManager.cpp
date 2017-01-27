@@ -313,7 +313,7 @@ unsigned short CommunicationManager::Caculate_Checksum(std::string* frame)
 	unsigned short bytes_sum = 0;
 	unsigned lowest_8_bits = 0;
 	unsigned short checksum = 0;
-	unsigned char checksum_byte;
+	//unsigned char checksum_byte;
 
 	for (unsigned short i = 0; i < frame->size(); i++)
 		bytes_sum += static_cast<unsigned short>(frame->at(i));
@@ -534,7 +534,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)10));
 		std::cout <<"Payload size" <<mavlink_msg->payload64.size() << std::endl;
 		uint64_t header = (uint64_t)0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
-		std::cout << "Total chunks:" <<total << std::endl;
+		std::cout << "Total chunks:" <<check_sum << std::endl;
 		//temporary_buffer[MAX_BUFFER_SIZE]="";
 		frame="";
 		uint16_t* header_16 = u64_cvt_u16(header);
@@ -559,7 +559,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				number++;
 				cnt=0;
 				frame = "";
-				std::cout << "Total chunks:" <<total << std::endl;
+				std::cout << "checksum:" <<total << std::endl;
 				header=0;
 				header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
 				header_16 = u64_cvt_u16(header);
