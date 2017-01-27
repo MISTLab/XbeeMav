@@ -355,8 +355,12 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 	uint16_t* header;
 	if (size_in_messages > 0)
 	{
-		steps++;
-		if(steps==100) steps=0;
+		if(!multi_msgs.empty()) steps++;
+		if(steps==10){ 
+			steps=0;
+			multi_msgs.clear();
+			cur_checksum=0;
+		}
 		uint64_t current_int64 = 0;
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
