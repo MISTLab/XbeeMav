@@ -92,6 +92,8 @@ private:
 	std::map< int, std::shared_ptr<std::string> > multi_msgs;
 	std::vector<uint16_t> multi_msgs_available;
 	uint16_t cur_checksum;
+	uint16_t counter;
+	uint16_t steps;
 	//uint16_t multi_msg_size;
 };
 

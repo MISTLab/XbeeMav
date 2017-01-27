@@ -355,6 +355,8 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 	uint16_t* header;
 	if (size_in_messages > 0)
 	{
+		//steps++;
+		//if(steps==100) steps=0;
 		uint64_t current_int64 = 0;
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
@@ -389,16 +391,23 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				std::cout << "first message" << std::endl;
 				multi_msgs.insert(make_pair(header[2], in_message));
 				cur_checksum=header[1];
+				counter=1;
 				}
 				else if (header[1]==cur_checksum && header[0] == 0) {
 					std::map< int, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
-					if(it!=multi_msgs.end())
+					if(it!=multi_msgs.end()){
 						multi_msgs.erase(it);
-					multi_msgs.insert(make_pair(header[2], in_message));					
+						multi_msgs.insert(make_pair(header[2], in_message));
+						}
+					else{
+						multi_msgs.insert(make_pair(header[2], in_message));
+						counter++;
+					}
+										
 					/*If the total size of msg reached transfer to topic*/
-					if(multi_msgs.size()==header[3]){
+					if(counter==header[3]){
 						
-						for(int i =1; i<header[3]+1;i++){
+						for(int i =1; i<=header[3];i++){
 							it = multi_msgs.find(i);
 								for (int j = 1; j < it->second->size(); j++)
 								{
@@ -418,6 +427,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					multi_msgs.clear();
 					cur_checksum=0;
 					}
+					steps=0;
 					
 				}
 				delete[] header;
