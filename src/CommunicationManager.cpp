@@ -412,7 +412,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					/*If the total size of msg reached transfer to topic*/
 					if(counter==header[3]){
 						
-						for(uint16_t i =1; i<=header[3]+1;i++){
+						for(uint16_t i =1; i<=header[3];i++){
 							it = multi_msgs.find(i);
 							std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
 							std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
@@ -430,7 +430,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 								}
 						}
 						
-					std::cout << "one multi message published in topic" << std::endl;
+					std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
 					mavlink_publisher_.publish(mavlink_msg);
 					multi_msgs.clear();
 					cur_checksum=0;
