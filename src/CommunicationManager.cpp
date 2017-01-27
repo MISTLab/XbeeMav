@@ -372,7 +372,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			sscanf(in_message->c_str(), "%" PRIu64 " ",
 							&current_int64);
 			header = u64_cvt_u16(current_int64);
-			std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
+			//std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
 			if(header[3]==1 && header[0]==0 && header[1]>1 && header[2]==1){
 				for (std::size_t i = 1; i < in_message->size()-1; i++)
 				{
@@ -385,15 +385,15 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					}
 		
 				}
-				std::cout << "Single packet message received" << std::endl;
+				//std::cout << "Single packet message received" << std::endl;
 				mavlink_publisher_.publish(mavlink_msg);
 				//delete[] header;
 			}
 			else if (header[3]>1 && header[0]==0 && header[1]>1){
-				std::cout << "Multi packet: check_cur:"<<cur_checksum<< std::endl;
+				//std::cout << "Multi packet: check_cur:"<<cur_checksum<< std::endl;
 				
 				if (multi_msgs.empty()){
-				std::cout << "first message" << std::endl;
+				//std::cout << "first message" << std::endl;
 				multi_msgs.insert(make_pair(header[2], in_message));
 				cur_checksum=header[1];
 				counter=1;
@@ -408,15 +408,15 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						multi_msgs.insert(make_pair(header[2], in_message));
 						counter++;
 					}
-					std::cout << "multi msg counter" <<counter << std::endl;					
+					//std::cout << "multi msg counter" <<counter << std::endl;					
 					/*If the total size of msg reached transfer to topic*/
 					if(counter==header[3]){
 						
 						for(uint16_t i =1; i<=header[3];i++){
 							it = multi_msgs.find(i);
-							std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
-							std::cout << "received Frame:"<<(void *) it->second->c_str() << std::endl;	
-							std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
+							//std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
+							//std::cout << "received Frame:"<<(void *) it->second->c_str() << std::endl;	
+							//std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
 								for (std::size_t j = 1; j < it->second->size()-1; j++)
 								{
 									
@@ -425,14 +425,14 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 									{
 										sscanf(it->second->c_str() + j, "%" PRIu64 " ",
 												&current_int64); 
-										std::cout << "received Frame:" << current_int64 << std::endl;
+										//std::cout << "received Frame:" << current_int64 << std::endl;
 										mavlink_msg.payload64.push_back(current_int64);
 									}
 		
 								}
 						}
 						
-					std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
+					//std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
 					mavlink_publisher_.publish(mavlink_msg);
 					multi_msgs.clear();
 					cur_checksum=0;
@@ -494,7 +494,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
 	const unsigned short MAX_BUFFER_SIZE = 211; /* 20 (length(uint64_t)) * 10 (max int number) + 10 (spaces) + 1 */
-	const unsigned short MAX_NBR_OF_INT64 = 20;
+	//const unsigned short MAX_NBR_OF_INT64 = 20;
 	char temporary_buffer[MAX_BUFFER_SIZE];
 	std::string frame;
 	int converted_bytes = 0;
@@ -528,13 +528,13 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		uint16_t cnt=0;
 		uint16_t number=1;
 		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)10));
-		std::cout <<"Payload size" <<mavlink_msg->payload64.size() << std::endl;
+		//std::cout <<"Payload size" <<mavlink_msg->payload64.size() << std::endl;
 		uint64_t header = (uint64_t)0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
-		std::cout << "Total chunks:" <<check_sum << std::endl;
+		//std::cout << "Total chunks:" <<check_sum << std::endl;
 		//temporary_buffer[MAX_BUFFER_SIZE]="";
 		frame="";
 		uint16_t* header_16 = u64_cvt_u16(header);
-		std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
+		//std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 		converted_bytes= sprintf(
 				temporary_buffer,  "%" PRIu64 " ",
 				(uint64_t)header);	
@@ -547,24 +547,24 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				converted_bytes += sprintf(
 				temporary_buffer+converted_bytes, "%" PRIu64 " ",
 				(uint64_t)mavlink_msg->payload64.at(i));
-				std::cout << "Frame:"<<mavlink_msg->payload64.at(i) << std::endl;
+				//std::cout << "Frame:"<<mavlink_msg->payload64.at(i) << std::endl;
 				
 			}	
 
 			if(cnt==10)
-			{	std::cout << "Multi frame sent no:"<<number << std::endl;
+			{	//std::cout << "Multi frame sent no:"<<number << std::endl;
 				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
-				std::cout << "Frame:"<<frame << std::endl;
-				std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
+				//std::cout << "Frame:"<<frame << std::endl;
+				//std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
 				number++;
 				cnt=0;
 				frame = "";
-				std::cout << "total:" <<total << std::endl;
+				//std::cout << "total:" <<total << std::endl;
 				header=0;
 				header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
 				header_16 = u64_cvt_u16(header);				
-				std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
+				//std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 				memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
 				converted_bytes = sprintf(
 						temporary_buffer, "%" PRIu64 " ",
@@ -574,7 +574,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			}
 		}
                 if(total==1){
-		std::cout << "Single frame" << std::endl;
+		//std::cout << "Single frame" << std::endl;
 		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
 		}
