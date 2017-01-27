@@ -552,7 +552,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				(uint64_t)mavlink_msg->payload64.at(i));
 				cnt++;
 			}	
-			else
+			if(cnt==10)
 			{	std::cout << "Multi frame sent no:"<<number << std::endl;
 				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
