@@ -403,7 +403,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						multi_msgs.insert(make_pair(header[2], in_message));
 						counter++;
 					}
-										
+					std::cout << "multi msg counter" <<counter << std::endl;					
 					/*If the total size of msg reached transfer to topic*/
 					if(counter==header[3]){
 						
