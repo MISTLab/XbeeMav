@@ -560,6 +560,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				cnt=0;
 				frame = "";
 				header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+				header_16 = u64_cvt_u16(header);
 				std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 				memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
 				converted_bytes = sprintf(
@@ -574,6 +575,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
 		}
+		delete[] header_16;
 	//}
 }
 
