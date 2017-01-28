@@ -555,6 +555,8 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			{	//std::cout << "Multi frame sent no:"<<number << std::endl;
 				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
+				/*Sleep for some time in order not to confuse Xbee, a try to reduce errors*/
+				usleep(10);
 				//std::cout << "Frame:"<<frame << std::endl;
 				//std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
 				number++;
