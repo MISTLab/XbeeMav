@@ -425,14 +425,14 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 									{
 										sscanf(it->second->c_str() + j, "%" PRIu64 " ",
 												&current_int64); 
-										std::cout << "received Frame:" << current_int64 << std::endl;
+										//std::cout << "received Frame:" << current_int64 << std::endl;
 										mavlink_msg.payload64.push_back(current_int64);
 									}
 		
 								}
 						}
 						
-					//std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
+					std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
 					mavlink_publisher_.publish(mavlink_msg);
 					multi_msgs.clear();
 					cur_checksum=0;
@@ -547,7 +547,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				converted_bytes += sprintf(
 				temporary_buffer+converted_bytes, "%" PRIu64 " ",
 				(uint64_t)mavlink_msg->payload64.at(i));
-				std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
+				//std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
 				//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
 			}	
 
