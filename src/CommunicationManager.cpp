@@ -547,8 +547,8 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				converted_bytes += sprintf(
 				temporary_buffer+converted_bytes, "%" PRIu64 " ",
 				(uint64_t)mavlink_msg->payload64.at(i));
-				std::cout << "Sent Frame:"<<mavlink_msg->payload64.at(i) << std::endl;
-				
+				std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
+				//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
 			}	
 
 			if(cnt==10)
@@ -556,7 +556,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
 				/*Sleep for some time in order not to confuse Xbee, a try to reduce errors*/
-				usleep(100);
+				usleep(200);
 				//std::cout << "Frame:"<<frame << std::endl;
 				//std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
 				number++;
