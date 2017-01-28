@@ -33,7 +33,7 @@ namespace Xbee
 //*****************************************************************************
 CommunicationManager::CommunicationManager():
 	START_DLIMITER(static_cast<unsigned char>(0x7E)),
-	LOOP_RATE(30) /* 10 fps */
+	LOOP_RATE(10) /* 10 fps */
 {
 }
 
@@ -556,7 +556,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 				serial_device_.Send_Frame(frame);
 				/*Sleep for some time in order not to confuse Xbee, a try to reduce errors*/
-				//usleep(200);
+				usleep(1000);
 				//std::cout << "Frame:"<<frame << std::endl;
 				//std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
 				number++;
