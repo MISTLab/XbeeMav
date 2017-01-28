@@ -400,11 +400,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				}
 				else if (header[1]==cur_checksum) {
 					std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
-					if(it!=multi_msgs.end()){
-						multi_msgs.erase(it);
-						multi_msgs.insert(make_pair(header[2], in_message));
-						}
-					else{
+					//if(it!=multi_msgs.end()){
+						//multi_msgs.erase(it);
+						//multi_msgs.insert(make_pair(header[2], in_message));
+						//}
+					if(it==multi_msgs.end()){
 						multi_msgs.insert(make_pair(header[2], in_message));
 						counter++;
 					}
@@ -425,7 +425,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 									{
 										sscanf(it->second->c_str() + j, "%" PRIu64 " ",
 												&current_int64); 
-										//std::cout << "received Frame:" << current_int64 << std::endl;
+										std::cout << "received Frame:" << current_int64 << std::endl;
 										mavlink_msg.payload64.push_back(current_int64);
 									}
 		
@@ -547,7 +547,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				converted_bytes += sprintf(
 				temporary_buffer+converted_bytes, "%" PRIu64 " ",
 				(uint64_t)mavlink_msg->payload64.at(i));
-				//std::cout << "Frame:"<<mavlink_msg->payload64.at(i) << std::endl;
+				std::cout << "Sent Frame:"<<mavlink_msg->payload64.at(i) << std::endl;
 				
 			}	
 
