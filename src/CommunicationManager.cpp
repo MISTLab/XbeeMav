@@ -400,11 +400,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				}
 				else if (header[1]==cur_checksum) {
 					std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
-					//if(it!=multi_msgs.end()){
-						//multi_msgs.erase(it);
-						//multi_msgs.insert(make_pair(header[2], in_message));
-						//}
-					if(it==multi_msgs.end()){
+					if(it!=multi_msgs.end()){
+						multi_msgs.erase(it);
+						multi_msgs.insert(make_pair(header[2], in_message));
+						}
+					else{
 						multi_msgs.insert(make_pair(header[2], in_message));
 						counter++;
 					}
