@@ -677,7 +677,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 	else */ 
 	if( !( multi_msgs_send_dict.empty() ) ){
 		/*If the sent message chunk not the last message then send else clear the dict*/
-		if( (uint16_t)(multi_msgs_send_dict.size() ) - 1 == sending_chunk_no && (uint16_t)ack_received_dict.size() == (uint16_t)no_of_dev){
+		if( (uint16_t)(multi_msgs_send_dict.size() ) - 1 == sending_chunk_no && (uint16_t)ack_received_dict.size() == (uint16_t)(no_of_dev)-1){
 			std::cout << "clearing multi msg queue and telling buzz"<< std::endl;
 			multi_msgs_send_dict.clear();
 			sending_chunk_no=0;
@@ -690,7 +690,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 
 		else{
 			std::cout << "current size of ack in sender " <<ack_received_dict.size()<<(uint16_t) no_of_dev<< std::endl;
-			if((uint16_t)ack_received_dict.size() == (uint16_t) no_of_dev){
+			if((uint16_t)ack_received_dict.size() == (uint16_t) (no_of_dev)-1){
 				sending_chunk_no++;
 				ack_received_dict.clear();
 				std::cout << "sending next msg"<< std::endl;
