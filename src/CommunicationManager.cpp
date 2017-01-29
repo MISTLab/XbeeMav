@@ -234,7 +234,7 @@ inline bool CommunicationManager::Serve_Flight_Controller(mavros_msgs::CommandIn
 
 	if (command != 0)
 	{
-		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+		//Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 		serial_device_.Send_Frame(frame);
 	}
 	
@@ -260,6 +260,7 @@ void CommunicationManager::Display_Init_Communication_Failure()
 inline void CommunicationManager::Generate_Transmit_Request_Frame(
 		const char* const message,
 		std::string * frame,
+		int tot,
 		const unsigned char frame_ID,
 		const std::string& destination_adssress,
 		const std::string& short_destination_adress,
@@ -280,7 +281,7 @@ inline void CommunicationManager::Generate_Transmit_Request_Frame(
 	frame->push_back(FAME_TYPE);
 	frame->push_back(frame_ID);
 	frame->append(bytes_frame_parameters);
-	frame->append(message, std::strlen(message));
+	frame->append(message, tot);
 
 	Calculate_and_Append_Checksum(frame);
 	Add_Length_and_Start_Delimiter(frame);
@@ -390,24 +391,45 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			std::shared_ptr<std::string> in_message =
 					in_messages_->Pop_Front();
 			mavros_msgs::Mavlink mavlink_msg;
-			
+			int tot = 0;
 			//uint64_t header=0;
-			sscanf(in_message->c_str(), "%" PRIu64 " ",
-							&current_int64);
+			/*Copy the header*/
+			memcpy(&current_int64,in_message->c_str(),sizeof(uint64_t));
+			tot+=sizeof(uint64_t);
+						
+			/*sscanf(in_message->c_str(), "%" PRIu64 " ",
+							&current_int64);*/
+			std::cout<<"Size of char"<<sizeof(char)<< std::endl;
+			std::cout<<in_message->c_str()<< std::endl;
 			header = u64_cvt_u16(current_int64);
+			std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;	
 			/*Check header for msgs or ack msg */
 			if(header[0]==(uint16_t)MESSAGE_CONSTANT){
-				//std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
 				if(header[3]==1 && header[1]>1 && header[2]==1){
-					for (std::size_t i = 1; i < in_message->size()-1; i++)
+
+					/*copy msg size*/
+					uint16_t tmp_size;
+					memcpy(&tmp_size,in_message->c_str()+tot,sizeof(uint16_t));
+					tot+=sizeof(uint16_t);
+					int uint64_size=tmp_size/sizeof(uint64_t);
+					uint64_t message_obt[uint64_size];
+					/*Copy obt msg*/
+					memcpy(message_obt,in_message->c_str()+tot,tmp_size);
+					tot+=tmp_size;
+					uint16_t test_end_char;
+					memcpy(&test_end_char,in_message->c_str()+tot,sizeof(uint16_t));
+					tot+=sizeof(uint16_t);
+					std::cout<<"test end char: "<< std::endl;
+		
+					for (uint16_t i = 0; i < uint64_size; i++)
 					{
-				
-						if (' ' == in_message->at(i) || 0 == i)
+						mavlink_msg.payload64.push_back(message_obt[i]);
+						/*if (' ' == in_message->at(i) || 0 == i)
 						{
 							sscanf(in_message->c_str() + i, "%" PRIu64 " ",
 									&current_int64);
 							mavlink_msg.payload64.push_back(current_int64);
-						}
+						}*/
 		
 					}
 					std::cout << "Single packet message received size"<<mavlink_msg.payload64.size()<< std::endl;
@@ -425,15 +447,17 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					multi_msgs_receive.insert(make_pair(header[2], in_message));
 					receiver_cur_checksum=header[1];
 					//counter=1;
+					int tot =0;
 					uint64_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
 					sprintf(temporary_buffer,  "%" PRIu64 " ",(uint64_t)ack_msg);
-					Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+					Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 					serial_device_.Send_Frame(frame);
 					}
 					else if (header[1]==receiver_cur_checksum) {
+						int tot =0;
 						uint64_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
 						sprintf(temporary_buffer,  "%" PRIu64 " ",(uint64_t)ack_msg);
-						Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+						Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 						serial_device_.Send_Frame(frame);
 						/*tmp*/								
 						uint64_t tmp_printer;
@@ -603,13 +627,41 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
 		uint16_t* header_16 = u64_cvt_u16(header);
 		//std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
-		converted_bytes= sprintf(
+		/*converted_bytes= sprintf(
 				temporary_buffer,  "%" PRIu64 " ",
-				(uint64_t)header);	
+				(uint64_t)header);*/	
 		delete[] header_16;
 		/*Single frame message*/
+		
+		
 		if(mavlink_msg->payload64.size() <= MAX_NBR_OF_INT64){
+
+			uint64_t message_obt[mavlink_msg->payload64.size()];
+			uint8_t* cpy_buff = (uint8_t*)malloc( sizeof(uint64_t)+sizeof(uint16_t) + ( sizeof(uint64_t)*mavlink_msg->payload64.size() ) );
+			memset(cpy_buff, 0,sizeof(uint64_t) + ( sizeof(uint64_t)*mavlink_msg->payload64.size() ));
+			int tot=0;
 			for (std::size_t i =0; i<mavlink_msg->payload64.size(); i++)
+			{
+				message_obt[i] =(uint64_t)mavlink_msg->payload64[i];
+				
+			}
+			/*Copy the header*/
+			memcpy(cpy_buff,&header,sizeof(uint64_t));
+			tot+=sizeof(uint64_t);
+			/*copy msg size*/
+			uint16_t tmp_size=(uint16_t)mavlink_msg->payload64.size();
+			memcpy(cpy_buff+tot,&tmp_size,sizeof(uint64_t));
+			tot+=sizeof(uint16_t);
+			/*Copy obt msg*/
+			memcpy(cpy_buff+tot,message_obt,sizeof(uint64_t)*tmp_size);
+			tot+=sizeof(uint64_t)*tmp_size;
+			uint16_t test_end_char = 1234;
+			memcpy(cpy_buff+tot,&test_end_char,sizeof(uint16_t));
+			tot+=sizeof(uint16_t);
+			/*Copy the data to char buff*/
+			memcpy((void*)temporary_buffer,(void*)cpy_buff,tot);
+			delete[] cpy_buff;
+			/*for (std::size_t i =0; i<mavlink_msg->payload64.size(); i++)
 			{
 					cnt++;
 					converted_bytes += sprintf(
@@ -618,11 +670,11 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					//std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
 					//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
 				
-			}
+			}*/
 			//std::cout << "Single frame" << std::endl;
-			std::cout << "Single packet message sent size"<<mavlink_msg->payload64.size()<< std::endl;
-			Generate_Transmit_Request_Frame(temporary_buffer, &frame);
-					serial_device_.Send_Frame(frame);
+			std::cout << "Single packet message sent size"<<mavlink_msg->payload64.size()<<"  Tot size: "<< tot<< std::endl;
+			Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
+			serial_device_.Send_Frame(frame);
 			
 		}
 		else{
@@ -643,9 +695,9 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					//std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
 					//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
 				if(cnt==MAX_NBR_OF_INT64)
-				{	
+				{	int tot =0;
 					//std::cout << "Multi frame sent no:"<<number << std::endl;					
-					Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+					Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 					//std::S
 					multi_msgs_send_dict.push_back(frame);	
 					//serial_device_.Send_Frame(frame);
@@ -671,7 +723,8 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 						
 			}
 			if(cnt!=MAX_NBR_OF_INT64 && cnt!=0){
-			Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+			int tot =0;
+			Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 			multi_msgs_send_dict.push_back(frame);
 			}
 			

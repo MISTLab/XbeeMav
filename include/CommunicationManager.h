@@ -65,6 +65,7 @@ private:
 	void Generate_Transmit_Request_Frame(
 			const char* const message,
 			std::string* frame,
+			int tot,
 			const unsigned char frame_ID = 
 			static_cast<unsigned char>(0x01),
 			const std::string& destination_adssress = "000000000000FFFF",
