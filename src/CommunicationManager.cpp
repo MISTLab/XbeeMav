@@ -400,7 +400,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 							&current_int64);*/
 			std::cout<<in_message<< std::endl;
 			header = u64_cvt_u16(current_int64);
-			std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;	
+			//std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;	
 			/*Check header for msgs or ack msg */
 			if(header[0]==(uint16_t)MESSAGE_CONSTANT){
 				if(header[3]==1 && header[1]>1 && header[2]==1){
@@ -408,13 +408,13 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					uint16_t tmp_size=0;
 					memcpy(&tmp_size,in_message->c_str()+tot,sizeof(uint16_t));
 					tot+=sizeof(uint16_t);
-					std::cout<<"received size in bytes: "<<tmp_size << std::endl;
+					//std::cout<<"received size in bytes: "<<tmp_size << std::endl;
 					//int uint64_size=tmp_size/sizeof(uint64_t);
 					uint64_t message_obt[tmp_size];
 					/*Copy obt msg*/
 					memcpy(message_obt,in_message->c_str()+tot,tmp_size*sizeof(uint64_t));
 					tot+=tmp_size*sizeof(uint64_t);
-					std::cout<<"tot size : "<<tot<< std::endl;
+					//std::cout<<"tot size : "<<tot<< std::endl;
 					for (uint16_t i = 0; i < tmp_size; i++)
 					{
 						mavlink_msg.payload64.push_back(message_obt[i]);
@@ -426,7 +426,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						}*/
 		
 					}
-					std::cout << "Single packet message received size"<<mavlink_msg.payload64.size()<< std::endl;
+					//std::cout << "Single packet message received size"<<mavlink_msg.payload64.size()<< std::endl;
 					mavlink_publisher_.publish(mavlink_msg);
 					//delete[] header;
 				}
@@ -458,7 +458,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						//uint64_t tmp_printer;
 						//sscanf(frame.c_str(), "%" PRIu64 " ",&tmp_printer);
 						//uint16_t* tmp_printer_16 =u64_cvt_u16(tmp_printer);
-						std::cout << "Send ACK for " <<ACK_MESSAGE_CONSTANT<<"  "<<header[1] <<"  "<<header[2]<<"  "<<device_id<<"  "<< std::endl;
+						//std::cout << "Send ACK for " <<ACK_MESSAGE_CONSTANT<<"  "<<header[1] <<"  "<<header[2]<<"  "<<device_id<<"  "<< std::endl;
 						//delete[] tmp_printer_16;
 						/*tmp*/
 						std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs_receive.find(header[2]);
@@ -482,13 +482,13 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 								uint16_t tmp_size=0;
 								memcpy(&tmp_size,it->second->c_str()+tot,sizeof(uint16_t));
 								tot+=sizeof(uint16_t);
-								std::cout<<"multi publisher received size in bytes: "<<tmp_size << std::endl;
+								//std::cout<<"multi publisher received size in bytes: "<<tmp_size << std::endl;
 								//int uint64_size=tmp_size/sizeof(uint64_t);
 								uint64_t message_obt[tmp_size];
 								/*Copy obt msg*/
 								memcpy(message_obt,it->second->c_str()+tot,tmp_size*sizeof(uint64_t));
 								tot+=tmp_size*sizeof(uint64_t);
-								std::cout<<"tot size : "<<tot<< std::endl;
+								//std::cout<<"tot size : "<<tot<< std::endl;
 								for (uint16_t i = 0; i < tmp_size; i++)
 								{
 									mavlink_msg.payload64.push_back(message_obt[i]);
@@ -511,7 +511,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 								/*Copy obt msg*/
 								
 								//memcpy(current_int64, it->second->c_str()+tot, tmp_size*sizeof(uint64_t));
-								std::cout << "received Frame:" << current_int64 << std::endl;
+								//std::cout << "received Frame:" << current_int64 << std::endl;
 								//if(previous_int64 != current_int64){
 								//mavlink_msg.payload64.push_back(current_int64);
 								//previous_int64=current_int64;
@@ -533,8 +533,8 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				}
 			}
 			else if(header[0]==(uint16_t)ACK_MESSAGE_CONSTANT){
-				std::cout << "ACK Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
-				std::cout << "size of ack map before adding" << ack_received_dict.size()<< std::endl;
+				//std::cout << "ACK Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
+				//std::cout << "size of ack map before adding" << ack_received_dict.size()<< std::endl;
 				/*Ack message about a message packet find wheather that matches with your current expectation*/
 				if(header[1]==Sender_cur_checksum && header[2]== (sending_chunk_no+1)){
 					std::map< uint16_t, uint16_t >::iterator it = ack_received_dict.find(header[3]);
@@ -547,7 +547,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					}					
 									
 				}
-				std::cout << "ACK added and size of ack map " << ack_received_dict.size()<< std::endl;
+				//std::cout << "ACK added and size of ack map " << ack_received_dict.size()<< std::endl;
 				
 			}
 			delete[] header;
@@ -672,7 +672,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			/*Copy the data to char buff*/
 			memcpy((void*)temporary_buffer,(void*)cpy_buff,tot);
 			delete[] cpy_buff;
-			std::cout << "Single packet message sent size"<<mavlink_msg->payload64.size()<<"  Tot size: "<< tot<< std::endl;
+			//std::cout << "Single packet message sent size"<<mavlink_msg->payload64.size()<<"  Tot size: "<< tot<< std::endl;
 			Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 			serial_device_.Send_Frame(frame);
 			
@@ -765,9 +765,9 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				multi_msgs_send_dict.push_back(frame);
 			}
 			delete[] cpy_buff;
-			std::cout << " Received size: " <<mavlink_msg->payload64.size() << std::endl;
-			std::cout << "total size of multi msg dict mavlink size:" <<multi_msgs_send_dict.size() << std::endl;
-			std::cout << "uint64_counter size:" <<uint64_counter << std::endl;
+			//std::cout << " Received size: " <<mavlink_msg->payload64.size() << std::endl;
+			//std::cout << "total size of multi msg dict mavlink size:" <<multi_msgs_send_dict.size() << std::endl;
+			//std::cout << "uint64_counter size:" <<uint64_counter << std::endl;
 			/*Send the first message chunk*/
 			//serial_device_.Send_Frame(multi_msgs_send_dict[0]);
 		}
@@ -798,11 +798,11 @@ void CommunicationManager::Send_multi_msg(){
 		}	
 
 		else{
-			std::cout << "current size of ack in sender " <<ack_received_dict.size()<<(uint16_t) no_of_dev<< std::endl;
+			std::cout << "current size of ack in sender " <<ack_received_dict.size()<<"No. of devices"<<(uint16_t) no_of_dev<< std::endl;
 			if((uint16_t)ack_received_dict.size() == (uint16_t) (no_of_dev)-1){
 				sending_chunk_no++;
 				ack_received_dict.clear();
-				std::cout << "sending next msg"<< std::endl;
+				//std::cout << "sending next msg"<< std::endl;
 			}
 			std::cout << "Sent frame no. " <<sending_chunk_no+1 << std::endl;
 			//uint64_t tmp_printer;
