@@ -373,9 +373,9 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 	if (size_in_messages > 0)
 	{
 		if(!multi_msgs_receive.empty()) steps++;
-		if(steps>1000){ 
+		if(steps>500){ 
 			steps=0;
-			//multi_msgs_receive.clear();
+			multi_msgs_receive.clear();
 			receiver_cur_checksum=0;
 		}
 		uint64_t current_int64 = 0;
