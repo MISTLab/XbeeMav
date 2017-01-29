@@ -111,6 +111,9 @@ private:
 	uint16_t receiveing_cur_totalsize;
 	uint16_t steps;
 	//uint16_t multi_msg_size;
+
+	int test_1;
+	struct timeval t1, t2;
 };
 
 

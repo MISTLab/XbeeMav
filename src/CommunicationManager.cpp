@@ -170,6 +170,7 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	
 		ros::Rate loop_rate(LOOP_RATE);
 		counter=0;
+		test_1=1;
 		while (ros::ok())
 		{
 			Check_In_Messages_and_Transfer_To_Topics();
@@ -372,19 +373,20 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 {
 	std::size_t size_in_messages = in_messages_->Get_Size();
 	uint16_t* header;
+	if(!multi_msgs_receive.empty()) steps++;
+	if(steps>200){ 
+		steps=0;
+		multi_msgs_receive.clear();
+		receiver_cur_checksum=0;
+	}
+	/*T0 overcome mesages after the stop transmission of multi packet*/
+	if(counter!=0){
+	 multi_msgs_receive.clear();
+	 counter--;
+	}
 	if (size_in_messages > 0)
 	{
-		if(!multi_msgs_receive.empty()) steps++;
-		if(steps>500){ 
-			steps=0;
-			multi_msgs_receive.clear();
-			receiver_cur_checksum=0;
-		}
-		/*T0 overcome mesages after the stop transmission of multi packet*/
-		if(counter!=0){
-		 multi_msgs_receive.clear();
-		 counter--;
-		}
+		
 		uint64_t current_int64 = 0;
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
@@ -402,6 +404,22 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			header = u64_cvt_u16(current_int64);
 			//std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;	
 			/*Check header for msgs or ack msg */
+			char temporary_buffer[20];
+			std::string frame;
+					
+			if(current_int64 <= 3){
+  				Generate_Transmit_Request_Frame(in_message->c_str(), &frame,sizeof(uint64_t) * 4);
+				serial_device_.Send_Frame(frame);
+			}
+			if(current_int64 == (uint64_t)device_id ){
+				
+				gettimeofday(&t2, NULL);
+				double time_spent =   (t2.tv_sec - t1.tv_sec) * 1000.0; //(double)(end - begin) / CLOCKS_PER_SEC;
+				time_spent += (t2.tv_usec - t1.tv_usec) / 1000.0;
+				std::cout<<"Time taken for send and receive : "<<time_spent<<std::endl;	
+				test_1=1;
+				
+			}
 			if(header[0]==(uint16_t)MESSAGE_CONSTANT){
 				if(header[3]==1 && header[1]>1 && header[2]==1){
 					/*copy msg size*/
@@ -433,8 +451,8 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				else if (header[3]>1 && header[1]>1){
 					
 					/*multimsg received send ack msg*/
-					char temporary_buffer[20];
-					std::string frame;
+					//char temporary_buffer[20];
+					//std::string frame;
 					std::cout << "Multi msg Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
 					if (multi_msgs_receive.empty()){
 					//std::cout << "first message" << std::endl;
@@ -783,7 +801,21 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 }
 
 void CommunicationManager::Send_multi_msg(){
-
+	if(test_1){
+	test_1=0;
+	char temporary_buffer[sizeof(uint64_t) * 4];
+	std::string frame;
+	uint64_t constant_msg[3];
+	constant_msg[1]=245253253253532;
+	constant_msg[2]=245253253253532;
+	constant_msg[3]=245253253253532;
+	constant_msg[0]=(uint64_t) device_id;
+	gettimeofday(&t1, NULL);
+	/*Copy the data to char buff*/
+	memcpy((void*)temporary_buffer,(void*)constant_msg,sizeof(uint64_t) * 4);
+	Generate_Transmit_Request_Frame(temporary_buffer, &frame,sizeof(uint64_t) * 4);
+	multi_msgs_send_dict.push_back(frame);
+	}
 	if( !( multi_msgs_send_dict.empty() ) ){
 		/*If the sent message chunk not the last message then send else clear the dict*/
 		if( (uint16_t)(multi_msgs_send_dict.size() ) - 1 == sending_chunk_no && (uint16_t)ack_received_dict.size() == (uint16_t)(no_of_dev)-1){
