@@ -44,7 +44,7 @@ namespace Xbee
 //*****************************************************************************
 CommunicationManager::CommunicationManager():
 	START_DLIMITER(static_cast<unsigned char>(0x7E)),
-	LOOP_RATE(10) /* 10 fps */
+	LOOP_RATE(30) /* 10 fps */
 {
 }
 
@@ -604,7 +604,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
 	const unsigned short MAX_BUFFER_SIZE = 211; /* 20 (length(uint64_t)) * 10 (max int number) + 10 (spaces) + 1 */
-	const unsigned short MAX_NBR_OF_INT64 = 25;
+	const unsigned short MAX_NBR_OF_INT64 = 24;
 	char temporary_buffer[MAX_BUFFER_SIZE];
 	std::string frame;
 	int converted_bytes = 0;

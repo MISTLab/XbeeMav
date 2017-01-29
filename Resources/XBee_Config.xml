@@ -22,7 +22,7 @@
 		<Parameter Command="CI" Description="Cluster ID">11</Parameter>
 		<Parameter Command="EE" Description="Encryption Enbale">0</Parameter>
 		<Parameter Command="KY" Description="Encryption Key"></Parameter>
-		<Parameter Command="BD" Description="Baud Rate">8</Parameter>
+		<Parameter Command="BD" Description="Baud Rate">4</Parameter>
 		<Parameter Command="NB" Description="Parity">0</Parameter>
 		<Parameter Command="SB" Description="Stop Bits">0</Parameter>
 		<Parameter Command="RO" Description="Packetization Timeout">3</Parameter>
