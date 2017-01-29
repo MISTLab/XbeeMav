@@ -44,7 +44,7 @@ namespace Xbee
 //*****************************************************************************
 CommunicationManager::CommunicationManager():
 	START_DLIMITER(static_cast<unsigned char>(0x7E)),
-	LOOP_RATE(10) /* 10 fps */
+	LOOP_RATE(50) /* 10 fps */
 {
 }
 
@@ -169,7 +169,7 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	{
 	
 		ros::Rate loop_rate(LOOP_RATE);
-
+		counter=0;
 		while (ros::ok())
 		{
 			Check_In_Messages_and_Transfer_To_Topics();
@@ -378,6 +378,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			multi_msgs_receive.clear();
 			receiver_cur_checksum=0;
 		}
+		/*T0 overcome mesages after the stop transmission of multi packet*/
+		if(counter!=0){
+		 multi_msgs_receive.clear();
+		 counter--;
+		}
 		uint64_t current_int64 = 0;
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
@@ -473,6 +478,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						mavlink_publisher_.publish(mavlink_msg);
 						multi_msgs_receive.clear();
 						receiver_cur_checksum=0;
+						counter=10;
 						}
 						steps=0;
 					
