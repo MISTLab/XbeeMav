@@ -419,7 +419,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					//std::cout << "first message" << std::endl;
 					multi_msgs_receive.insert(make_pair(header[2], in_message));
 					receiver_cur_checksum=header[1];
-					counter=1;
+					//counter=1;
 					uint64_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
 					sprintf(temporary_buffer,  "%" PRIu64 " ",(uint64_t)ack_msg);
 					Generate_Transmit_Request_Frame(temporary_buffer, &frame);
@@ -444,11 +444,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 							}
 						else{
 							multi_msgs_receive.insert(make_pair(header[2], in_message));
-							counter++;
+							//counter++;
 						}
-						//std::cout << "multi msg counter" <<counter << std::endl;					
+						std::cout << "multi msg counter " <<multi_msgs_receive.size() << std::endl;					
 						/*If the total size of msg reached transfer to topic*/
-						if(counter==header[3]){
+						if(multi_msgs_receive.size()==header[3]){
 						
 							for(uint16_t i =1; i<=header[3];i++){
 								it = multi_msgs_receive.find(i);
@@ -463,7 +463,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 										{
 											sscanf(it->second->c_str() + j, "%" PRIu64 " ",
 													&current_int64); 
-											//std::cout << "received Frame:" << current_int64 << std::endl;
+											std::cout << "received Frame:" << current_int64 << std::endl;
 											mavlink_msg.payload64.push_back(current_int64);
 										}
 		
