@@ -22,6 +22,17 @@ return out;
 
 }
 
+uint16_t get_deviceid(){
+/* Get hostname */
+   char hstnm[30];
+   gethostname(hstnm, 30);
+   /* Make numeric id from hostname */
+   /* NOTE: here we assume that the hostname is in the format M100X */
+   int id = strtol(hstnm + 4, NULL, 10);
+	//fprintf(stdout, "Robot id from get rid buzz util:  %i\n",id);
+return (uint16_t)id;
+}
+
 namespace Mist
 {
 
@@ -147,6 +158,12 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	}
 	else
 		std::cout << "Failed to Get Topic Name: param 'Xbee_Out_To_Buzz' Not Found." << std::endl;
+
+	/*Get no of devices*/
+	node_handle_.getParam("No_of_dev", no_of_dev);
+	/*Get device Id feom host name*/
+	device_id=get_deviceid();
+	std::cout << "Device Id" <<device_id << std::endl;
 
 	if (success_1 && success_2)
 	{
@@ -355,11 +372,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 	uint16_t* header;
 	if (size_in_messages > 0)
 	{
-		if(!multi_msgs.empty()) steps++;
-		if(steps==10){ 
+		if(!multi_msgs_receive.empty()) steps++;
+		if(steps>10){ 
 			steps=0;
-			multi_msgs.clear();
-			cur_checksum=0;
+			multi_msgs_receive.clear();
+			receiver_cur_checksum=0;
 		}
 		uint64_t current_int64 = 0;
 		for (std::size_t j = 0; j < size_in_messages; j++)
@@ -372,76 +389,117 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			sscanf(in_message->c_str(), "%" PRIu64 " ",
 							&current_int64);
 			header = u64_cvt_u16(current_int64);
-			//std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
-			if(header[3]==1 && header[0]==0 && header[1]>1 && header[2]==1){
-				for (std::size_t i = 1; i < in_message->size()-1; i++)
-				{
-				
-					if (' ' == in_message->at(i) || 0 == i)
+			/*Check header for msgs or ack msg */
+			if(header[0]==(uint16_t)MESSAGE_CONSTANT){
+				//std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
+				if(header[3]==1 && header[1]>1 && header[2]==1){
+					for (std::size_t i = 1; i < in_message->size()-1; i++)
 					{
-						sscanf(in_message->c_str() + i, "%" PRIu64 " ",
-								&current_int64);
-						mavlink_msg.payload64.push_back(current_int64);
-					}
-		
-				}
-				//std::cout << "Single packet message received" << std::endl;
-				mavlink_publisher_.publish(mavlink_msg);
-				//delete[] header;
-			}
-			else if (header[3]>1 && header[0]==0 && header[1]>1){
-				//std::cout << "Multi packet: check_cur:"<<cur_checksum<< std::endl;
 				
-				if (multi_msgs.empty()){
-				//std::cout << "first message" << std::endl;
-				multi_msgs.insert(make_pair(header[2], in_message));
-				cur_checksum=header[1];
-				counter=1;
-				}
-				else if (header[1]==cur_checksum) {
-					std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs.find(header[2]);
-					if(it!=multi_msgs.end()){
-						multi_msgs.erase(it);
-						multi_msgs.insert(make_pair(header[2], in_message));
+						if (' ' == in_message->at(i) || 0 == i)
+						{
+							sscanf(in_message->c_str() + i, "%" PRIu64 " ",
+									&current_int64);
+							mavlink_msg.payload64.push_back(current_int64);
 						}
-					else{
-						multi_msgs.insert(make_pair(header[2], in_message));
-						counter++;
+		
 					}
-					//std::cout << "multi msg counter" <<counter << std::endl;					
-					/*If the total size of msg reached transfer to topic*/
-					if(counter==header[3]){
+					std::cout << "Single packet message received size"<<mavlink_msg.payload64.size()<< std::endl;
+					mavlink_publisher_.publish(mavlink_msg);
+					//delete[] header;
+				}
+				else if (header[3]>1 && header[1]>1){
+					
+					/*multimsg received send ack msg*/
+					char temporary_buffer[20];
+					std::string frame;
+					std::cout << "Multi msg Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
+	
+					if (multi_msgs_receive.empty()){
+					//std::cout << "first message" << std::endl;
+					multi_msgs_receive.insert(make_pair(header[2], in_message));
+					receiver_cur_checksum=header[1];
+					counter=1;
+					uint16_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
+					sprintf(temporary_buffer,  "%" PRIu64 " ",(uint64_t)ack_msg);
+					Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+					serial_device_.Send_Frame(frame);
+					}
+					else if (header[1]==receiver_cur_checksum) {
+						uint16_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
+						sprintf(temporary_buffer,  "%" PRIu64 " ",(uint64_t)ack_msg);
+						Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+						serial_device_.Send_Frame(frame);
+						/*tmp*/								
+						uint64_t tmp_printer;
+						sscanf(frame.c_str(), "%" PRIu64 " ",&tmp_printer);
+						uint16_t* tmp_printer_16 =u64_cvt_u16(tmp_printer);
+						delete[] tmp_printer_16;
+						std::cout << "Send ACK for " <<tmp_printer_16[0]<<"  "<<tmp_printer_16[1]<<"  "<<tmp_printer_16[2]<<"  "<<tmp_printer_16[3]<<"  "<< std::endl;
+						/*tmp*/
+						std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs_receive.find(header[2]);
+						if(it!=multi_msgs_receive.end()){
+							multi_msgs_receive.erase(it);
+							multi_msgs_receive.insert(make_pair(header[2], in_message));
+							}
+						else{
+							multi_msgs_receive.insert(make_pair(header[2], in_message));
+							counter++;
+						}
+						//std::cout << "multi msg counter" <<counter << std::endl;					
+						/*If the total size of msg reached transfer to topic*/
+						if(counter==header[3]){
 						
-						for(uint16_t i =1; i<=header[3];i++){
-							it = multi_msgs.find(i);
-							//std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
-							//std::cout << "received Frame:"<<(void *) it->second->c_str() << std::endl;	
-							//std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
-								for (std::size_t j = 1; j < it->second->size()-1; j++)
-								{
+							for(uint16_t i =1; i<=header[3];i++){
+								it = multi_msgs_receive.find(i);
+								//std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
+								//std::cout << "received Frame:"<<(void *) it->second->c_str() << std::endl;	
+								//std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
+									for (std::size_t j = 1; j < it->second->size()-1; j++)
+									{
 									
 				
-									if (' ' == it->second->at(j) || 0 == j)
-									{
-										sscanf(it->second->c_str() + j, "%" PRIu64 " ",
-												&current_int64); 
-										//std::cout << "received Frame:" << current_int64 << std::endl;
-										mavlink_msg.payload64.push_back(current_int64);
-									}
+										if (' ' == it->second->at(j) || 0 == j)
+										{
+											sscanf(it->second->c_str() + j, "%" PRIu64 " ",
+													&current_int64); 
+											//std::cout << "received Frame:" << current_int64 << std::endl;
+											mavlink_msg.payload64.push_back(current_int64);
+										}
 		
-								}
-						}
+									}
+							}
 						
-					std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
-					mavlink_publisher_.publish(mavlink_msg);
-					multi_msgs.clear();
-					cur_checksum=0;
-					}
-					steps=0;
+						std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
+						mavlink_publisher_.publish(mavlink_msg);
+						multi_msgs_receive.clear();
+						receiver_cur_checksum=0;
+						}
+						steps=0;
 					
+					}
 				}
-				delete[] header;
 			}
+			else if(header[0]==(uint16_t)ACK_MESSAGE_CONSTANT){
+				std::cout << "ACK Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
+				std::cout << "size of ack map before adding" << ack_received_dict.size()<< std::endl;
+				/*Ack message about a message packet find wheather that matches with your current expectation*/
+				if(header[1]==Sender_cur_checksum && header[2]== (sending_chunk_no+1)){
+					std::map< uint16_t, uint16_t >::iterator it = ack_received_dict.find(header[3]);
+					if(it!=ack_received_dict.end()){
+						ack_received_dict.erase(it);
+						ack_received_dict.insert(std::make_pair((uint16_t)header[3], (uint16_t)ACK_MESSAGE_CONSTANT));
+						}
+					else{
+						ack_received_dict.insert( std::make_pair( (uint16_t)header[3], (uint16_t)ACK_MESSAGE_CONSTANT ) );
+					}					
+									
+				}
+				std::cout << "ACK added and size of ack map " << ack_received_dict.size()<< std::endl;
+				
+			}
+			delete[] header;
+
 		}
 		
 	}
@@ -494,97 +552,157 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
 	const unsigned short MAX_BUFFER_SIZE = 211; /* 20 (length(uint64_t)) * 10 (max int number) + 10 (spaces) + 1 */
-	//const unsigned short MAX_NBR_OF_INT64 = 20;
+	const unsigned short MAX_NBR_OF_INT64 = 10;
 	char temporary_buffer[MAX_BUFFER_SIZE];
 	std::string frame;
 	int converted_bytes = 0;
-
-	/* Check the payload is not too long. Otherwise ignore it. */
-/*	if (mavlink_msg->payload64.size() <= MAX_NBR_OF_INT64)
-	{
-		for (unsigned short i = 0; i < mavlink_msg->payload64.size(); i++)
-		{
-			converted_bytes += sprintf(
-				temporary_buffer + converted_bytes, "%" PRIu64 " ",
-				(uint64_t)mavlink_msg->payload64.at(i));
-		
-		}
-	
-		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
-		serial_device_.Send_Frame(frame);
+	if((uint64_t)mavlink_msg->payload64.at(0)==(uint64_t)XBEE_STOP_TRANSMISSION && mavlink_msg->payload64.size() == 1){
+		std::cout << "clearing multi msg queue after request from buzz"<< std::endl;
+		multi_msgs_send_dict.clear();
+		ack_received_dict.clear();
+		sending_chunk_no=0;
+		/*Multi message packets stoped tell rosbuzz this*/
+		mavros_msgs::Mavlink mavlink_msg;
+		mavlink_msg.payload64.push_back(XBEE_MESSAGE_CONSTANT);
+		mavlink_publisher_.publish(mavlink_msg);
 	}
-	else
-	{*/
+	else if(mavlink_msg->payload64.size() > MAX_NBR_OF_INT64 && !( multi_msgs_send_dict.empty() ) ){
+		std::cout << "Sending previous multi message not complete yet, so dropping message"<<std::endl;
+	}
+	else{
 		char temporary_buffer_check[6000];
 		for(std::size_t i=0; i<mavlink_msg->payload64.size(); i++)
 		{
 			converted_bytes += sprintf(
 				temporary_buffer_check + converted_bytes, "%" PRIu64 " ",
 				(uint64_t)mavlink_msg->payload64.at(i));
-			
+		
 		}
+		
 		frame.append(temporary_buffer_check, std::strlen(temporary_buffer_check));
 		uint16_t check_sum = (uint16_t)Caculate_Checksum(&frame);
 		uint16_t cnt=0;
 		uint16_t number=1;
-		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)10));
+		uint16_t total =ceil((double)((double)mavlink_msg->payload64.size()/(double)MAX_NBR_OF_INT64));
 		//std::cout <<"Payload size" <<mavlink_msg->payload64.size() << std::endl;
-		uint64_t header = (uint64_t)0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+		uint64_t header = (uint64_t)MESSAGE_CONSTANT | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
 		//std::cout << "Total chunks:" <<check_sum << std::endl;
 		//temporary_buffer[MAX_BUFFER_SIZE]="";
 		frame="";
+		memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
 		uint16_t* header_16 = u64_cvt_u16(header);
 		//std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 		converted_bytes= sprintf(
 				temporary_buffer,  "%" PRIu64 " ",
 				(uint64_t)header);	
 		delete[] header_16;
-		for (std::size_t i =0; i<mavlink_msg->payload64.size(); i++)
-		{
-			
-			if(cnt<10){
-				cnt++;
-				converted_bytes += sprintf(
-				temporary_buffer+converted_bytes, "%" PRIu64 " ",
-				(uint64_t)mavlink_msg->payload64.at(i));
-				//std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
-				//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
-			}	
-
-			if(cnt==10)
-			{	//std::cout << "Multi frame sent no:"<<number << std::endl;
-				Generate_Transmit_Request_Frame(temporary_buffer, &frame);
-				serial_device_.Send_Frame(frame);
-				/*Sleep for some time in order not to confuse Xbee, a try to reduce errors*/
-				usleep(1000);
-				//std::cout << "Frame:"<<frame << std::endl;
-				//std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
-				number++;
-				cnt=0;
-				frame = "";
-				//std::cout << "total:" <<total << std::endl;
-				header=0;
-				header = 0 | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
-				header_16 = u64_cvt_u16(header);				
-				//std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
-				memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
-				converted_bytes = sprintf(
-						temporary_buffer, "%" PRIu64 " ",
-						(uint64_t)header);
-	
-				delete[] header_16;
+		/*Single frame message*/
+		if(mavlink_msg->payload64.size() <= MAX_NBR_OF_INT64){
+			for (std::size_t i =0; i<mavlink_msg->payload64.size(); i++)
+			{
+					cnt++;
+					converted_bytes += sprintf(
+					temporary_buffer+converted_bytes, "%" PRIu64 " ",
+					(uint64_t)mavlink_msg->payload64.at(i));
+					//std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
+					//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
+				
 			}
+			//std::cout << "Single frame" << std::endl;
+			std::cout << "Single packet message sent size"<<mavlink_msg->payload64.size()<< std::endl;
+			Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+					serial_device_.Send_Frame(frame);
+			
 		}
-                if(total==1){
-		//std::cout << "Single frame" << std::endl;
-		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
-				serial_device_.Send_Frame(frame);
-		}
-		if(number==total){
-		 Generate_Transmit_Request_Frame(temporary_buffer, &frame);
-				serial_device_.Send_Frame(frame);
-		}
+		else{
+			/*clear all the related parameter and get ready to send multi msg*/
+			sending_chunk_no=0;
+			Sender_cur_checksum = check_sum;
+			ack_received_dict.clear();
+			multi_msgs_send_dict.clear();
+			/*Multi message frame received, split them into chunks and store them in dict*/
+			for (std::size_t i =0; i<mavlink_msg->payload64.size(); i++)
+			{
 		
+				
+					cnt++;
+					converted_bytes += sprintf(
+					temporary_buffer+converted_bytes, "%" PRIu64 " ",
+					(uint64_t)mavlink_msg->payload64.at(i));
+					//std::cout << "Sent Frame in (uint64):"<<mavlink_msg->payload64.at(i) << std::endl;
+					//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
+				if(cnt==MAX_NBR_OF_INT64)
+				{	
+					//std::cout << "Multi frame sent no:"<<number << std::endl;					
+					Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+					//std::S
+					multi_msgs_send_dict.push_back(frame);	
+					//serial_device_.Send_Frame(frame);
+					/*Sleep for some time in order not to confuse Xbee, a try to reduce errors*/
+					//usleep(1000);
+					//std::cout << "Frame:"<<frame << std::endl;
+					//std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
+					number++;
+					cnt=0;
+					frame = "";
+					//std::cout << "total:" <<total << std::endl;
+					header=0;
+					header = (uint64_t) MESSAGE_CONSTANT | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
+					header_16 = u64_cvt_u16(header);				
+					std::cout << "put header in dict" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
+					memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
+					converted_bytes = sprintf(
+							temporary_buffer, "%" PRIu64 " ",
+							(uint64_t)header);
+
+					//delete[] header_16;
+				}
+						
+			}
+			if(cnt!=MAX_NBR_OF_INT64 && cnt!=0){
+			Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+			multi_msgs_send_dict.push_back(frame);
+			}
+			
+			std::cout << "total size of multi msg dict after geting it from rosbuzz:" <<multi_msgs_send_dict.size() << std::endl;
+			/*Send the first message chunk*/
+			//serial_device_.Send_Frame(multi_msgs_send_dict[0]);
+		}
+	}
+	/*check for chunk to send, if multi chunk message present*/
+	/*first msg*/
+/*	if(sending_chunk_no==0 && !( multi_msgs_send_dict.empty() ) ){
+		serial_device_.Send_Frame(multi_msgs_send_dict.at(sending_chunk_no));
+	}
+	else */ 
+	if( !( multi_msgs_send_dict.empty() ) ){
+		/*If the sent message chunk not the last message then send else clear the dict*/
+		if( multi_msgs_send_dict.size() - 1 != sending_chunk_no ){
+			if(ack_received_dict.size() == (uint16_t) no_of_dev){
+				sending_chunk_no++;
+				ack_received_dict.clear();
+			}
+			std::cout << "Sent frame no. " <<sending_chunk_no+1 << std::endl;
+			//uint64_t tmp_printer;
+			//std::cout<<"Current msg in string "<<multi_msgs_send_dict.at(sending_chunk_no)<< std::endl;
+			//sscanf(multi_msgs_send_dict.at(sending_chunk_no).c_str(), "%" PRIu64 " ",&tmp_printer);
+			//uint16_t* tmp_printer_16 =u64_cvt_u16(tmp_printer);
+			//std::cout << "Send header" <<tmp_printer_16[0]<<"  "<<tmp_printer_16[1]<<"  "<<tmp_printer_16[2]<<"  "<<tmp_printer_16[3]<<"  "<< std::endl;
+			//delete[] tmp_printer_16;
+
+			serial_device_.Send_Frame(multi_msgs_send_dict.at(sending_chunk_no));
+		}
+		else{
+			std::cout << "clearing multi msg queue and telling buzz"<< std::endl;
+			multi_msgs_send_dict.clear();
+			sending_chunk_no=0;
+			/*Multi message packet sent tell rosbuzz this*/
+			mavros_msgs::Mavlink mavlink_msg;
+			mavlink_msg.payload64.push_back(XBEE_MESSAGE_CONSTANT);
+			mavlink_publisher_.publish(mavlink_msg);
+
+		}	
+	}
 	//}
 }
 

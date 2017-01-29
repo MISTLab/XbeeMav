@@ -18,6 +18,10 @@
 
 #include"SerialDevice.h"
 
+#define MESSAGE_CONSTANT 238
+#define ACK_MESSAGE_CONSTANT 911
+#define XBEE_MESSAGE_CONSTANT 586782343
+#define XBEE_STOP_TRANSMISSION 4355356352
 
 namespace Mist
 {
@@ -88,11 +92,21 @@ private:
 	ros::Publisher mavlink_publisher_;
 	ros::ServiceClient mav_dji_client_;
 	ros::ServiceServer mav_dji_server_;
+	/*No of robots*/
+	int no_of_dev;
+	int device_id;
         /*Vector msgs*/
-	std::map< std::size_t, std::shared_ptr<std::string> > multi_msgs;
-	std::vector<uint16_t> multi_msgs_available;
-	uint16_t cur_checksum;
-	uint16_t counter;
+	std::map< std::size_t, std::shared_ptr<std::string> > multi_msgs_receive;
+	std::vector<std::string> multi_msgs_send_dict;
+	/*Sending param*/
+	uint16_t sending_chunk_no, Sender_cur_checksum;
+	std::map< uint16_t, uint16_t > ack_received_dict;
+	//std::vector<uint16_t> multi_msgs_send_counter;
+	//std::vector<uint16_t> multi_msgs_sender;
+	/*Receiving param*/
+	uint16_t receiver_cur_checksum;
+	uint16_t counter;  //After implementation change this to vector.size()
+	uint16_t receiveing_cur_totalsize;
 	uint16_t steps;
 	//uint16_t multi_msg_size;
 };
