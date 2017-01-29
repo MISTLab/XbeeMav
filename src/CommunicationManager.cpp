@@ -455,11 +455,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 						serial_device_.Send_Frame(frame);
 						/*tmp*/								
-						uint64_t tmp_printer;
-						sscanf(frame.c_str(), "%" PRIu64 " ",&tmp_printer);
-						uint16_t* tmp_printer_16 =u64_cvt_u16(tmp_printer);
-						std::cout << "Send ACK for " <<tmp_printer_16[0]<<"  "<<tmp_printer_16[1]<<"  "<<tmp_printer_16[2]<<"  "<<tmp_printer_16[3]<<"  "<< std::endl;
-						delete[] tmp_printer_16;
+						//uint64_t tmp_printer;
+						//sscanf(frame.c_str(), "%" PRIu64 " ",&tmp_printer);
+						//uint16_t* tmp_printer_16 =u64_cvt_u16(tmp_printer);
+						std::cout << "Send ACK for " <<ACK_MESSAGE_CONSTANT<<"  "<<header[1] <<"  "<<header[2]<<"  "<<device_id<<"  "<< std::endl;
+						//delete[] tmp_printer_16;
 						/*tmp*/
 						std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs_receive.find(header[2]);
 						if(it!=multi_msgs_receive.end()){
@@ -604,7 +604,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
 	const unsigned short MAX_BUFFER_SIZE = 211; /* 20 (length(uint64_t)) * 10 (max int number) + 10 (spaces) + 1 */
-	const unsigned short MAX_NBR_OF_INT64 = 21;
+	const unsigned short MAX_NBR_OF_INT64 = 25;
 	char temporary_buffer[MAX_BUFFER_SIZE];
 	std::string frame;
 	int converted_bytes = 0;
