@@ -420,13 +420,13 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					multi_msgs_receive.insert(make_pair(header[2], in_message));
 					receiver_cur_checksum=header[1];
 					counter=1;
-					uint16_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
+					uint64_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
 					sprintf(temporary_buffer,  "%" PRIu64 " ",(uint64_t)ack_msg);
 					Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 					serial_device_.Send_Frame(frame);
 					}
 					else if (header[1]==receiver_cur_checksum) {
-						uint16_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
+						uint64_t ack_msg =  (uint64_t)ACK_MESSAGE_CONSTANT | ((uint64_t)header[1] << 16) | ((uint64_t)header[2] << 32) |((uint64_t) device_id << 48) ;
 						sprintf(temporary_buffer,  "%" PRIu64 " ",(uint64_t)ack_msg);
 						Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 						serial_device_.Send_Frame(frame);
@@ -434,8 +434,8 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						uint64_t tmp_printer;
 						sscanf(frame.c_str(), "%" PRIu64 " ",&tmp_printer);
 						uint16_t* tmp_printer_16 =u64_cvt_u16(tmp_printer);
-						delete[] tmp_printer_16;
 						std::cout << "Send ACK for " <<tmp_printer_16[0]<<"  "<<tmp_printer_16[1]<<"  "<<tmp_printer_16[2]<<"  "<<tmp_printer_16[3]<<"  "<< std::endl;
+						delete[] tmp_printer_16;
 						/*tmp*/
 						std::map< std::size_t, std::shared_ptr<std::string> >::iterator it = multi_msgs_receive.find(header[2]);
 						if(it!=multi_msgs_receive.end()){
