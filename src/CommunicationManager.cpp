@@ -677,10 +677,23 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 	else */ 
 	if( !( multi_msgs_send_dict.empty() ) ){
 		/*If the sent message chunk not the last message then send else clear the dict*/
-		if( multi_msgs_send_dict.size() - 1 != sending_chunk_no ){
-			if(ack_received_dict.size() == (uint16_t) no_of_dev){
+		if( (uint16_t)(multi_msgs_send_dict.size() ) - 1 == sending_chunk_no && (uint16_t)ack_received_dict.size() == (uint16_t)no_of_dev){
+			std::cout << "clearing multi msg queue and telling buzz"<< std::endl;
+			multi_msgs_send_dict.clear();
+			sending_chunk_no=0;
+			/*Multi message packet sent tell rosbuzz this*/
+			mavros_msgs::Mavlink mavlink_msg;
+			mavlink_msg.payload64.push_back(XBEE_MESSAGE_CONSTANT);
+			mavlink_publisher_.publish(mavlink_msg);
+
+		}	
+
+		else{
+			std::cout << "current size of ack in sender " <<ack_received_dict.size()<<(uint16_t) no_of_dev<< std::endl;
+			if((uint16_t)ack_received_dict.size() == (uint16_t) no_of_dev){
 				sending_chunk_no++;
 				ack_received_dict.clear();
+				std::cout << "sending next msg"<< std::endl;
 			}
 			std::cout << "Sent frame no. " <<sending_chunk_no+1 << std::endl;
 			//uint64_t tmp_printer;
@@ -692,16 +705,8 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 
 			serial_device_.Send_Frame(multi_msgs_send_dict.at(sending_chunk_no));
 		}
-		else{
-			std::cout << "clearing multi msg queue and telling buzz"<< std::endl;
-			multi_msgs_send_dict.clear();
-			sending_chunk_no=0;
-			/*Multi message packet sent tell rosbuzz this*/
-			mavros_msgs::Mavlink mavlink_msg;
-			mavlink_msg.payload64.push_back(XBEE_MESSAGE_CONSTANT);
-			mavlink_publisher_.publish(mavlink_msg);
 
-		}	
+
 	}
 	//}
 }
