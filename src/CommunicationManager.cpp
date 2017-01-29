@@ -44,7 +44,7 @@ namespace Xbee
 //*****************************************************************************
 CommunicationManager::CommunicationManager():
 	START_DLIMITER(static_cast<unsigned char>(0x7E)),
-	LOOP_RATE(50) /* 10 fps */
+	LOOP_RATE(60) /* 10 fps */
 {
 }
 
@@ -173,6 +173,7 @@ void CommunicationManager::Run_In_Swarm_Mode()
 		while (ros::ok())
 		{
 			Check_In_Messages_and_Transfer_To_Topics();
+			Send_multi_msg();
 			ros::spinOnce();
 	    		loop_rate.sleep();
 		}
@@ -680,6 +681,12 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		serial_device_.Send_Frame(multi_msgs_send_dict.at(sending_chunk_no));
 	}
 	else */ 
+	
+	//}
+}
+
+void CommunicationManager::Send_multi_msg(){
+
 	if( !( multi_msgs_send_dict.empty() ) ){
 		/*If the sent message chunk not the last message then send else clear the dict*/
 		if( (uint16_t)(multi_msgs_send_dict.size() ) - 1 == sending_chunk_no && (uint16_t)ack_received_dict.size() == (uint16_t)(no_of_dev)-1){
@@ -713,9 +720,8 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 
 
 	}
-	//}
-}
 
+}
 
 //*****************************************************************************
 void CommunicationManager::Display_Drone_Type_and_Running_Mode(
