@@ -687,7 +687,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			uint64_t message_obt[mavlink_msg->payload64.size()];
 			/*buffer for easy handel operation*/
 			uint8_t* cpy_buff = (uint8_t*)malloc( sizeof(uint64_t)+sizeof(uint16_t) + ( sizeof(uint64_t)*MAX_NBR_OF_INT64 ) );
-			memset(cpy_buff, 0,sizeof(uint64_t) + ( sizeof(uint64_t)*MAX_NBR_OF_INT64 ));
+			memset(cpy_buff, 0,sizeof(uint64_t)+sizeof(uint16_t) + ( sizeof(uint64_t)*MAX_NBR_OF_INT64 ));
 			for (std::size_t i =0; i<mavlink_msg->payload64.size(); i++)
 			{
 				message_obt[i] =(uint64_t)mavlink_msg->payload64[i];
@@ -733,7 +733,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					tot =0;					
 					number++;
 					frame = "";
-					memset(cpy_buff, 0,sizeof(uint64_t)+sizeof(uint16_t) + ( sizeof(uint64_t)*mavlink_msg->payload64.size() ));
+					memset(cpy_buff, 0,sizeof(uint64_t)+sizeof(uint16_t) + ( sizeof(uint64_t)*MAX_NBR_OF_INT64 ));
 					//std::cout << "total:" <<total << std::endl;
 					header=0;
 					header = (uint64_t) MESSAGE_CONSTANT | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
@@ -743,10 +743,11 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					/*converted_bytes = sprintf(
 							temporary_buffer, "%" PRIu64 " ",
 							(uint64_t)header);*/
-					delete[] header_16;
+					
 				//}
 						
 			}
+			delete[] header_16;
 			if(uint64_counter!=mavlink_msg->payload64.size()){
 				tmp_size=mavlink_msg->payload64.size() - uint64_counter;
 				/*Copy the header*/
