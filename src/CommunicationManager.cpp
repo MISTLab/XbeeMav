@@ -457,6 +457,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 						
 							for(uint16_t i =1; i<=header[3];i++){
 								it = multi_msgs_receive.find(i);
+								uint64_t previous_int64=0;
 								//std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
 								//std::cout << "received Frame:"<<(void *) it->second->c_str() << std::endl;	
 								//std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
@@ -468,8 +469,12 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 										{
 											sscanf(it->second->c_str() + j, "%" PRIu64 " ",
 													&current_int64); 
+										
 											std::cout << "received Frame:" << current_int64 << std::endl;
+											if(previous_int64 != current_int64){
 											mavlink_msg.payload64.push_back(current_int64);
+											previous_int64=current_int64;
+											}
 										}
 		
 									}
@@ -558,7 +563,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
 	const unsigned short MAX_BUFFER_SIZE = 211; /* 20 (length(uint64_t)) * 10 (max int number) + 10 (spaces) + 1 */
-	const unsigned short MAX_NBR_OF_INT64 = 10;
+	const unsigned short MAX_NBR_OF_INT64 = 21;
 	char temporary_buffer[MAX_BUFFER_SIZE];
 	std::string frame;
 	int converted_bytes = 0;
