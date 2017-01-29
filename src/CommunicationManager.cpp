@@ -373,9 +373,9 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 	if (size_in_messages > 0)
 	{
 		if(!multi_msgs_receive.empty()) steps++;
-		if(steps>10){ 
+		if(steps>1000){ 
 			steps=0;
-			multi_msgs_receive.clear();
+			//multi_msgs_receive.clear();
 			receiver_cur_checksum=0;
 		}
 		uint64_t current_int64 = 0;
@@ -414,7 +414,6 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					char temporary_buffer[20];
 					std::string frame;
 					std::cout << "Multi msg Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
-	
 					if (multi_msgs_receive.empty()){
 					//std::cout << "first message" << std::endl;
 					multi_msgs_receive.insert(make_pair(header[2], in_message));
