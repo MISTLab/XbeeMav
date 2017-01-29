@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
 	Mist::Xbee::CommunicationManager communication_manager;
 	const std::string& device = "/dev/ttyUSB0"; // TO DO can be introduced as command.
-	const std::size_t baud_rate = 19200; // TO DO Can be introduced as command.
+	const std::size_t baud_rate = 115200; // TO DO Can be introduced as command.
 	Mist::Xbee::CommunicationManager::DRONE_TYPE drone_type = 
 			Mist::Xbee::CommunicationManager::DRONE_TYPE::SLAVE;
 	Mist::Xbee::CommunicationManager::RUNNING_MODE running_mode =
