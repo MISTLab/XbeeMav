@@ -765,6 +765,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 				multi_msgs_send_dict.push_back(frame);
 			}
 			delete[] cpy_buff;
+			std::cout << " Received size: " <<mavlink_msg->payload64.size() << std::endl;
 			std::cout << "total size of multi msg dict mavlink size:" <<multi_msgs_send_dict.size() << std::endl;
 			std::cout << "uint64_counter size:" <<uint64_counter << std::endl;
 			/*Send the first message chunk*/
