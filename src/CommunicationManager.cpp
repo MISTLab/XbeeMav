@@ -44,7 +44,7 @@ namespace Xbee
 //*****************************************************************************
 CommunicationManager::CommunicationManager():
 	START_DLIMITER(static_cast<unsigned char>(0x7E)),
-	LOOP_RATE(10) /* 10 fps */
+	LOOP_RATE(30) /* 10 fps */
 {
 }
 
