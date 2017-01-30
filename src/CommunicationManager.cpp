@@ -170,10 +170,28 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	
 		ros::Rate loop_rate(LOOP_RATE);
 		counter=0;
+		test_1=0;
 		while (ros::ok())
 		{
+
+			test_1++;
+			if(test_1==100){
+			char temporary_buffer[sizeof(uint64_t) * 4];
+			std::string frame;
+			uint64_t constant_msg[3];
+			constant_msg[0]=245253253253532;
+			constant_msg[1]=245253253253532;
+			constant_msg[2]=245253253253532;
+			constant_msg[3]=(uint64_t) device_id;
+			gettimeofday(&t1, NULL);
+			/*Copy the data to char buff*/
+			memcpy((void*)temporary_buffer,(void*)constant_msg,sizeof(uint64_t) * 4);
+			Generate_Transmit_Request_Frame(temporary_buffer, &frame,sizeof(uint64_t) * 4);
+			serial_device_.Send_Frame(frame);
+			test_1 = 0;
+			}
 			Check_In_Messages_and_Transfer_To_Topics();
-			Send_multi_msg();
+//			Send_multi_msg();
 			ros::spinOnce();
 	    		loop_rate.sleep();
 		}
@@ -396,9 +414,23 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 			/*Copy the header*/
 			memcpy(&current_int64,in_message->c_str(),sizeof(uint64_t));
 			tot+=sizeof(uint64_t);
-			/*sscanf(in_message->c_str(), "%" PRIu64 " ",
-							&current_int64);*/
-			//std::cout<<in_message<< std::endl;
+			if(current_int64==245253253253532){
+				std::string frame;
+				current_int64=0;
+				memcpy(&current_int64,in_message->c_str()+24,sizeof(uint64_t));
+				if(current_int64==(uint64_t)device_id){
+				gettimeofday(&t2, NULL);
+				double time_spent =   (t2.tv_sec - t1.tv_sec) * 1000.0; //(double)(end - begin) / CLOCKS_PER_SEC;
+				time_spent += (t2.tv_usec - t1.tv_usec) / 1000.0;
+				std::cout<<"time taken to send and receive : "<<time_spent<< std::endl;
+				}
+				else{
+				Generate_Transmit_Request_Frame(in_message->c_str(), &frame,in_message->size());
+					serial_device_.Send_Frame(frame);
+				}
+
+			}
+			else{
 			header = u64_cvt_u16(current_int64);
 			//std::cout << "Received header" <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;	
 			/*Check header for msgs or ack msg */
@@ -496,30 +528,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 									
 		
 								}
-								//uint64_t previous_int64=0;
-								//std::cout<<"Transfering to topic chunk no. :"<<it->first << "Size of current map" <<it->second->size()<< std::endl;
-								//std::cout << "received Frame:"<<(void *) it->second->c_str() << std::endl;	
-								//std::cout<<"Size of map : "<< multi_msgs.size()<< std::endl;
-								/*	for (std::size_t j = 1; j < it->second->size()-1; j++)
-									{
-									
-				
-										if (' ' == it->second->at(j) || 0 == j)
-										{*/
-								//current_int64=0
-								//sscanf(it->second->c_str() + j, "%" PRIu64 " ",
-								//		&current_int64); 
-								/*Copy obt msg*/
 								
-								//memcpy(current_int64, it->second->c_str()+tot, tmp_size*sizeof(uint64_t));
-								//std::cout << "received Frame:" << current_int64 << std::endl;
-								//if(previous_int64 != current_int64){
-								//mavlink_msg.payload64.push_back(current_int64);
-								//previous_int64=current_int64;
-								//}
-								/*		}
-		
-									} */
 							}
 						
 						std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
@@ -552,7 +561,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 				
 			}
 			delete[] header;
-
+		    } //to delete	
 		}
 		
 	}
@@ -784,7 +793,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 }
 
 void CommunicationManager::Send_multi_msg(){
-
+		
 	if( !( multi_msgs_send_dict.empty() ) ){
 		/*If the sent message chunk not the last message then send else clear the dict*/
 		if( (uint16_t)(multi_msgs_send_dict.size() ) - 1 == sending_chunk_no && (uint16_t)ack_received_dict.size() == (uint16_t)(no_of_dev)-1){
