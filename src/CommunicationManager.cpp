@@ -623,7 +623,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		std::cout << "Sending previous multi message not complete yet, so dropping message"<<std::endl;
 	}
 	else{
-		char temporary_buffer_check[6000];
+		char temporary_buffer_check[600000];
 		/* create a whole check sum to handel multi chunk msg*/
 		for(std::size_t i=0; i<mavlink_msg->payload64.size(); i++)
 		{
@@ -663,7 +663,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			memcpy(cpy_buff,&header,sizeof(uint64_t));
 			tot+=sizeof(uint64_t);			
 			/*copy msg size*/
-			uint16_t tmp_size = (uint16_t)mavlink_msg->payload64.size();
+			uint16_t tmp_size=(uint16_t)mavlink_msg->payload64.size();
 			memcpy(cpy_buff+tot,&tmp_size,sizeof(uint64_t));
 			tot+=sizeof(uint16_t);
 			std::cout<<"tmp size in sender"<<tmp_size<< std::endl;
@@ -697,17 +697,15 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			//std::cout << "put header in dict" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 					
 			/*copy msg size*/
-			
-			int tmp_size=(uint16_t)MAX_NBR_OF_INT64;
+			uint16_t tmp_size=(uint16_t)MAX_NBR_OF_INT64;
 			uint16_t uint64_counter=0;
-			
 			/*Multi message frame received, split them into chunks and store them in dict*/
-			
-			do{
+			for (uint16_t i =1; i<total; i++)
+			{
 					/*Copy the header*/
 					memcpy(cpy_buff,&header,sizeof(uint64_t));
 					tot+=sizeof(uint64_t);			
-					memcpy(cpy_buff+tot,&tmp_size,sizeof(uint16_t));
+					memcpy(cpy_buff+tot,&tmp_size,sizeof(uint64_t));
 					tot+=sizeof(uint16_t);
 					/*Copy obt msg*/
 					memcpy(cpy_buff+tot, message_obt+uint64_counter, ( sizeof(uint64_t) )*tmp_size);
@@ -724,7 +722,6 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
 				//if(cnt==MAX_NBR_OF_INT64)
 				//{	
-					std::cout << "copied from buffer"<<std::endl;
 					//std::cout << "Multi frame sent no:"<<number << std::endl;					
 					Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 					//std::S
@@ -734,10 +731,6 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					//usleep(1000);
 					//std::cout << "Frame:"<<frame << std::endl;
 					//std::cout << "size of frame:"<<std::strlen(temporary_buffer)<< std::endl;
-					if(mavlink_msg->payload64.size() - uint64_counter >= MAX_NBR_OF_INT64)
-					tmp_size=(uint16_t)MAX_NBR_OF_INT64;
-					else tmp_size = mavlink_msg->payload64.size() - uint64_counter;
-					std::cout<<"tmp size : "<<tmp_size<<"mav payload size" <<mavlink_msg->payload64.size()<<std::endl;
 					tot =0;					
 					number++;
 					frame = "";
@@ -754,24 +747,24 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					
 				//}
 						
-			}while(number<=total);
+			}
 			delete[] header_16;
-		/*	if(uint64_counter!=mavlink_msg->payload64.size()){
-				tmp_size=mavlink_msg->payload64.size() - uint64_counter; */
+			if(uint64_counter!=mavlink_msg->payload64.size()){
+				tmp_size=mavlink_msg->payload64.size() - uint64_counter;
 				/*Copy the header*/
-			/*	memcpy(cpy_buff,&header,sizeof(uint64_t));
+				memcpy(cpy_buff,&header,sizeof(uint64_t));
 				tot+=sizeof(uint64_t);			
 				memcpy(cpy_buff+tot,&tmp_size,sizeof(uint64_t));
-				tot+=sizeof(uint16_t);*/
+				tot+=sizeof(uint16_t);
 				/*Copy obt msg*/
-			/*	memcpy(cpy_buff+tot, message_obt+uint64_counter, ( sizeof(uint64_t) )*tmp_size);
+				memcpy(cpy_buff+tot, message_obt+uint64_counter, ( sizeof(uint64_t) )*tmp_size);
 				uint64_counter+=tmp_size;
-				tot+=( sizeof(uint64_t) )*tmp_size;*/
+				tot+=( sizeof(uint64_t) )*tmp_size;
 				/*Copy the data to char buff*/
-			/*	memcpy((void*)temporary_buffer,(void*)cpy_buff,tot);
+				memcpy((void*)temporary_buffer,(void*)cpy_buff,tot);
 				Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 				multi_msgs_send_dict.push_back(frame);
-			}*/
+			}
 			delete[] cpy_buff;
 			//std::cout << " Received size: " <<mavlink_msg->payload64.size() << std::endl;
 			//std::cout << "total size of multi msg dict mavlink size:" <<multi_msgs_send_dict.size() << std::endl;
@@ -848,4 +841,5 @@ void CommunicationManager::Display_Drone_Type_and_Running_Mode(
 
 
 }
+
 
