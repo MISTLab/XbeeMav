@@ -663,7 +663,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			memcpy(cpy_buff,&header,sizeof(uint64_t));
 			tot+=sizeof(uint64_t);			
 			/*copy msg size*/
-			uint16_t tmp_size=(uint16_t)mavlink_msg->payload64.size();
+			uint16_t tmp_size = (uint16_t)mavlink_msg->payload64.size();
 			memcpy(cpy_buff+tot,&tmp_size,sizeof(uint64_t));
 			tot+=sizeof(uint16_t);
 			std::cout<<"tmp size in sender"<<tmp_size<< std::endl;
@@ -698,12 +698,12 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					
 			/*copy msg size*/
 			
-			uint16_t tmp_size=(uint16_t)MAX_NBR_OF_INT64;
+			int tmp_size=(uint16_t)MAX_NBR_OF_INT64;
 			uint16_t uint64_counter=0;
 			
 			/*Multi message frame received, split them into chunks and store them in dict*/
-			while(number!=total)
-			{
+			
+			do{
 					/*Copy the header*/
 					memcpy(cpy_buff,&header,sizeof(uint64_t));
 					tot+=sizeof(uint64_t);			
@@ -724,6 +724,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					//std::cout << "Sent Frame in string"<<temporary_buffer<<std::endl;
 				//if(cnt==MAX_NBR_OF_INT64)
 				//{	
+					std::cout << "copied from buffer"<<std::endl;
 					//std::cout << "Multi frame sent no:"<<number << std::endl;					
 					Generate_Transmit_Request_Frame(temporary_buffer, &frame,tot);
 					//std::S
@@ -736,6 +737,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					if(mavlink_msg->payload64.size() - uint64_counter >= MAX_NBR_OF_INT64)
 					tmp_size=(uint16_t)MAX_NBR_OF_INT64;
 					else tmp_size = mavlink_msg->payload64.size() - uint64_counter;
+					std::cout<<"tmp size : "<<tmp_size<<"mav payload size" <<mavlink_msg->payload64.size()<<std::endl;
 					tot =0;					
 					number++;
 					frame = "";
@@ -752,7 +754,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					
 				//}
 						
-			}
+			}while(number<=total);
 			delete[] header_16;
 		/*	if(uint64_counter!=mavlink_msg->payload64.size()){
 				tmp_size=mavlink_msg->payload64.size() - uint64_counter; */
