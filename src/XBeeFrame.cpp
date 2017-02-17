@@ -141,6 +141,16 @@ void Frame::Rearrange_Corrupted_Header()
 }
 
 
+<<<<<<< HEAD
+=======
+//*****************************************************************************
+char Frame::Get_Message_Type()
+{
+	return data_buffer_[15];
+}
+
+
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 }
 
 

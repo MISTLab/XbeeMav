@@ -47,15 +47,23 @@ void Init_Random_Seed()
 //*****************************************************************************
 int main(int argc, char **argv)
 {
+<<<<<<< HEAD
   const unsigned int MIN_PAYLOAD_SIZE = 1;
   const unsigned int MAX_PAYLOAD_SIZE = 10;
   
   ros::init(argc, argv, "flight_controller");
+=======
+  const unsigned int MIN_PAYLOAD_SIZE = 750;
+  const unsigned int MAX_PAYLOAD_SIZE = 752;
+  
+  ros::init(argc, argv, "test_buzz");
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
   ros::NodeHandle node_handle;
   ros::Publisher mavlink_pub = node_handle.advertise<mavros_msgs::Mavlink>("outMavlink", 1000);
   ros::Subscriber mavlink_sub = node_handle.subscribe("inMavlink", 1000, Receive_Payload_Callback);
 
+<<<<<<< HEAD
   ros::Rate loop_rate(0.2);
 
   Init_Random_Seed();
@@ -66,6 +74,21 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     mavros_msgs::Mavlink mavlink_msg_;
+=======
+  Init_Random_Seed();
+
+  int count = 0;
+  const std::size_t MAX_BUFFER_SIZE = 64;
+  char line[MAX_BUFFER_SIZE];
+  
+  std::cout << "Press Enter to Send New Mavlink Message..." << std::endl;
+  
+  while (ros::ok() && std::cin.getline(line, MAX_BUFFER_SIZE))
+  {
+    mavros_msgs::Mavlink mavlink_msg_;
+    mavlink_msg_.sysid = 2;
+    mavlink_msg_.msgid = 1;
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
     unsigned int payload_size = Get_Random_Size(MIN_PAYLOAD_SIZE, MAX_PAYLOAD_SIZE);
 
@@ -87,9 +110,14 @@ int main(int argc, char **argv)
 
     ros::spinOnce();
 
+<<<<<<< HEAD
     loop_rate.sleep();
 
     count++;
+=======
+    count++;
+    std::cout << "Press Enter to Send New Mavlink Message..." << std::endl;
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
   }
 
   return 0;

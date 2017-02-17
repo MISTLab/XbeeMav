@@ -9,6 +9,7 @@
 #include "CommunicationManager.h"
 
 
+<<<<<<< HEAD
 uint16_t* u64_cvt_u16(uint64_t u64){
    uint16_t* out = new uint16_t[4];
    uint32_t int32_1 = u64 & 0xFFFFFFFF;
@@ -33,6 +34,8 @@ uint16_t get_deviceid(){
 return (uint16_t)id;
 }
 
+=======
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 namespace Mist
 {
 
@@ -44,7 +47,11 @@ namespace Xbee
 //*****************************************************************************
 CommunicationManager::CommunicationManager():
 	START_DLIMITER(static_cast<unsigned char>(0x7E)),
+<<<<<<< HEAD
 	LOOP_RATE(50) /* 10 fps */
+=======
+	LOOP_RATE(10) /* 10 fps */
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 {
 }
 
@@ -61,14 +68,46 @@ bool CommunicationManager::Init(
 {
 	if (serial_device_.Init(device, baud_rate))
 	{
+<<<<<<< HEAD
 		in_messages_ = serial_device_.Get_In_Messages_Pointer();
 		return true;
+=======
+		serial_device_.Set_In_Messages_Pointers(&in_std_messages_, &in_fragments_,
+		&in_Acks_and_Pings_, &command_responses_);
+		
+		service_thread_ = std::make_shared<std::thread>(std::thread(&SerialDevice::Run_Service, &serial_device_));
+		
+		if (!packets_handler_.Init(&serial_device_, &in_packets_))
+			return false;
+		
+		std::clock_t elapsed_time = std::clock();
+		bool device_ID_loaded = false;
+		
+		while (std::clock() - elapsed_time <= 30000)
+		{
+			Process_Command_Responses();
+			
+			if (packets_handler_.Init_Device_ID())
+			{
+				device_ID_loaded = true;
+				break;
+			}
+		}
+		
+		if (!device_ID_loaded)
+			return false;
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	}
 	else
 	{
 		Display_Init_Communication_Failure();
 		return false;
 	}
+<<<<<<< HEAD
+=======
+	
+	return true;
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 }
 
 
@@ -77,7 +116,11 @@ bool CommunicationManager::Init(
 void CommunicationManager::Run(DRONE_TYPE drone_type,
 		RUNNING_MODE running_mode)
 {
+<<<<<<< HEAD
 	std::thread thread_service(&SerialDevice::Run_Service, &serial_device_);
+=======
+	std::thread thread_packets_handler(&PacketsHandler::Run, &packets_handler_);
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
 	Display_Drone_Type_and_Running_Mode(drone_type, running_mode);
 
@@ -87,7 +130,14 @@ void CommunicationManager::Run(DRONE_TYPE drone_type,
 		Run_In_Solo_Mode(drone_type);
 
 	serial_device_.Stop_Service();
+<<<<<<< HEAD
   	thread_service.join();
+=======
+	serial_device_.Close_Serial_Port();
+	packets_handler_.Quit();
+  	service_thread_->join();
+  	thread_packets_handler.join();
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 }
 
 
@@ -101,7 +151,11 @@ void CommunicationManager::Run_In_Solo_Mode(DRONE_TYPE drone_type)
 	{
 		if (node_handle_.getParam("Xbee_In_From_Controller", service_name))
 		{
+<<<<<<< HEAD
 			mav_dji_server_ = node_handle_.advertiseService(service_name.c_str(), 		&CommunicationManager::Serve_Flight_Controller, this);
+=======
+			mav_dji_server_ = node_handle_.advertiseService(service_name.c_str(), &CommunicationManager::Serve_Flight_Controller, this);
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 			success = true;
 		}
 		else
@@ -159,6 +213,7 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	else
 		std::cout << "Failed to Get Topic Name: param 'Xbee_Out_To_Buzz' Not Found." << std::endl;
 
+<<<<<<< HEAD
 	/*Get no of devices*/
 	node_handle_.getParam("No_of_dev", no_of_dev);
 	/*Get device Id feom host name*/
@@ -176,6 +231,21 @@ void CommunicationManager::Run_In_Swarm_Mode()
 			Send_multi_msg();
 			ros::spinOnce();
 	    		loop_rate.sleep();
+=======
+	if (success_1 && success_2)
+	{
+		ros::Rate loop_rate(LOOP_RATE);
+
+		while (ros::ok())
+		{
+			Process_In_Standard_Messages();
+			Process_In_Fragments();
+			Process_In_Acks_and_Pings();
+			Process_In_Packets();
+			packets_handler_.Delete_Packets_With_Time_Out();
+			ros::spinOnce();
+	    	loop_rate.sleep();
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		}
 	}	
 }
@@ -185,12 +255,20 @@ void CommunicationManager::Run_In_Swarm_Mode()
 inline bool CommunicationManager::Serve_Flight_Controller(mavros_msgs::CommandInt::
 		Request& request, mavros_msgs::CommandInt::Response& response)
 {
+<<<<<<< HEAD
 	const std::size_t MAX_BUFFER_SIZE = 255;
+=======
+	const std::size_t MAX_BUFFER_SIZE = 256;
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	unsigned int command = 0;
 	char temporary_buffer[MAX_BUFFER_SIZE];
 	std::string frame;
 
+<<<<<<< HEAD
 	switch(request.command)
+=======
+	/*switch(request.command)
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	{
 		case mavros_msgs::CommandCode::NAV_TAKEOFF:
 		{
@@ -234,9 +312,15 @@ inline bool CommunicationManager::Serve_Flight_Controller(mavros_msgs::CommandIn
 
 	if (command != 0)
 	{
+<<<<<<< HEAD
 		//Generate_Transmit_Request_Frame(temporary_buffer, &frame);
 		serial_device_.Send_Frame(frame);
 	}
+=======
+		Generate_Transmit_Request_Frame(temporary_buffer, &frame);
+		serial_device_.Send_Frame(frame);
+	}*/
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	
 	return true;
 }
@@ -257,10 +341,16 @@ void CommunicationManager::Display_Init_Communication_Failure()
 
 
 //*****************************************************************************
+<<<<<<< HEAD
 inline void CommunicationManager::Generate_Transmit_Request_Frame(
 		const char* const message,
 		std::string * frame,
 		int tot,
+=======
+/*inline void CommunicationManager::Generate_Transmit_Request_Frame(
+		const char* const message,
+		std::string * frame,
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		const unsigned char frame_ID,
 		const std::string& destination_adssress,
 		const std::string& short_destination_adress,
@@ -268,7 +358,11 @@ inline void CommunicationManager::Generate_Transmit_Request_Frame(
 		const std::string& options)
 {
 	const unsigned char FAME_TYPE = static_cast<unsigned char>(0x10); /* Transmit Request Frame */
+<<<<<<< HEAD
 	std::string frame_parameters;
+=======
+	/*std::string frame_parameters;
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	std::string bytes_frame_parameters;
 
 	frame_parameters.append(destination_adssress);
@@ -281,6 +375,7 @@ inline void CommunicationManager::Generate_Transmit_Request_Frame(
 	frame->push_back(FAME_TYPE);
 	frame->push_back(frame_ID);
 	frame->append(bytes_frame_parameters);
+<<<<<<< HEAD
 	frame->append(message, tot);
 
 	Calculate_and_Append_Checksum(frame);
@@ -290,6 +385,17 @@ inline void CommunicationManager::Generate_Transmit_Request_Frame(
 
 //*****************************************************************************
 inline void CommunicationManager::Convert_HEX_To_Bytes(
+=======
+	frame->append(message, std::strlen(message));
+
+	Calculate_and_Append_Checksum(frame);
+	Add_Length_and_Start_Delimiter(frame);
+}*/
+
+
+//*****************************************************************************
+/*inline void CommunicationManager::Convert_HEX_To_Bytes(
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		const std::string& HEX_data, std::string* converted_data)
 {
 	const unsigned short TWO_BYTES = 2;
@@ -305,11 +411,19 @@ inline void CommunicationManager::Convert_HEX_To_Bytes(
 		temporary_char = static_cast<unsigned char>(temporary_HEX);
 		converted_data->push_back(temporary_char);
 	}
+<<<<<<< HEAD
 }
 
 
 //*****************************************************************************
 inline void CommunicationManager::Calculate_and_Append_Checksum(
+=======
+}*/
+
+
+//*****************************************************************************
+/*inline void CommunicationManager::Calculate_and_Append_Checksum(
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		std::string* frame)
 {
 	unsigned short bytes_sum = 0;
@@ -324,6 +438,7 @@ inline void CommunicationManager::Calculate_and_Append_Checksum(
 	checksum = 0xFF - lowest_8_bits;
 	checksum_byte = static_cast<unsigned char>(checksum);
 	frame->push_back(checksum_byte);
+<<<<<<< HEAD
 }
 
 unsigned short CommunicationManager::Caculate_Checksum(std::string* frame)
@@ -345,6 +460,13 @@ return checksum;
 
 //*****************************************************************************
 inline void CommunicationManager::Add_Length_and_Start_Delimiter(
+=======
+}*/
+
+
+//*****************************************************************************
+/*inline void CommunicationManager::Add_Length_and_Start_Delimiter(
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		std::string* frame)
 {
 	const unsigned short FIVE_BYTES = 5;
@@ -355,7 +477,11 @@ inline void CommunicationManager::Add_Length_and_Start_Delimiter(
 	std::string header;
 	int frame_length = frame->size() - 1; /* frame_length = frame_size - checksum byte */
 
+<<<<<<< HEAD
 	header.push_back(START_DLIMITER);
+=======
+	/*header.push_back(START_DLIMITER);
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	sprintf(temporary_buffer, "%04X", frame_length);
 	sscanf(temporary_buffer, "%02X%02X", &Hex_frame_length_1, 
 			&Hex_frame_length_2);
@@ -364,6 +490,7 @@ inline void CommunicationManager::Add_Length_and_Start_Delimiter(
 	temporary_char = static_cast<unsigned char>(Hex_frame_length_2);
 	header.push_back(temporary_char);
 	frame->insert(0, header);
+<<<<<<< HEAD
 }
 
 
@@ -386,11 +513,26 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 		 counter--;
 		}
 		uint64_t current_int64 = 0;
+=======
+}*/
+
+
+//*****************************************************************************
+/*inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics() // TO DO delete
+{
+	std::size_t size_in_messages = in_messages_->Get_Size();
+	
+	if (size_in_messages > 0)
+	{
+		uint64_t current_int64 = 0;
+
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
 			std::shared_ptr<std::string> in_message =
 					in_messages_->Pop_Front();
 			mavros_msgs::Mavlink mavlink_msg;
+<<<<<<< HEAD
 			int tot = 0;
 			//uint64_t header=0;
 			/*Copy the header*/
@@ -565,6 +707,33 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Server()
 	std::size_t size_in_messages = in_messages_->Get_Size();
 	
 	if (size_in_messages > 0)
+=======
+			
+			for (std::size_t i = 0; i < in_message->size(); i++)
+			{
+				if (' ' == in_message->at(i) || 0 == i)
+				{
+					sscanf(in_message->c_str() + i, "%" PRIu64 " ",
+							&current_int64);
+					mavlink_msg.payload64.push_back(current_int64);
+				}
+		
+			}
+			
+			mavlink_publisher_.publish(mavlink_msg);
+		}
+		
+	}
+}*/
+
+
+//*****************************************************************************
+inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Server() // TO DO change it
+{
+	//std::size_t size_in_messages = in_messages_->Get_Size();
+	
+	/*if (size_in_messages > 0)
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	{
 		for (std::size_t j = 0; j < size_in_messages; j++)
 		{
@@ -596,7 +765,11 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Server()
 				ROS_INFO("XBeeMav: Faild to Tranfer Command.");
 			
 		}
+<<<<<<< HEAD
 	}
+=======
+	}*/
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 }
 
 
@@ -604,6 +777,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Server()
 inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
+<<<<<<< HEAD
 	const unsigned short MAX_BUFFER_SIZE = 211; /* 20 (length(uint64_t)) * 10 (max int number) + 10 (spaces) + 1 */
 	const unsigned short MAX_NBR_OF_INT64 = 24;
 	char temporary_buffer[MAX_BUFFER_SIZE];
@@ -820,6 +994,12 @@ void CommunicationManager::Send_multi_msg(){
 	}
 
 }
+=======
+	std::cout << "Received Message From Buzz" << std::endl; // TO DO delete
+	packets_handler_.Handle_Mavlink_Message(mavlink_msg);
+}
+
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
 //*****************************************************************************
 void CommunicationManager::Display_Drone_Type_and_Running_Mode(
@@ -837,9 +1017,110 @@ void CommunicationManager::Display_Drone_Type_and_Running_Mode(
 }
 
 
+<<<<<<< HEAD
 }
 
 
 }
 
 
+=======
+//*****************************************************************************
+void CommunicationManager::Process_In_Standard_Messages()
+{
+	std::size_t in_messages_size = in_std_messages_.Get_Size();
+	
+	if (in_messages_size > 0)
+	{
+		for (std::size_t j = 0; j < in_messages_size; j++)
+		{
+			std::shared_ptr<std::string> in_message =
+					in_std_messages_.Pop_Front();
+			mavros_msgs::Mavlink mavlink_msg;
+					
+			packets_handler_.Deserialize_Mavlink_Message(in_message->c_str(), &mavlink_msg, in_message->size());
+			mavlink_publisher_.publish(mavlink_msg);
+		}
+	}
+}
+
+
+//*****************************************************************************
+void CommunicationManager::Process_In_Acks_and_Pings()
+{
+	std::size_t in_messages_size = in_Acks_and_Pings_.Get_Size();
+	
+	if (in_messages_size > 0)
+	{
+		for (std::size_t j = 0; j < in_messages_size; j++)
+		{
+			std::shared_ptr<std::string> in_message =
+					in_Acks_and_Pings_.Pop_Front();
+					
+			packets_handler_.Process_Ping_Or_Acknowledgement(in_message);
+		}
+	}
+}
+
+
+//*****************************************************************************
+void CommunicationManager::Process_In_Fragments()
+{
+	std::size_t in_messages_size = in_fragments_.Get_Size();
+	
+	if (in_messages_size > 0)
+	{
+		for (std::size_t j = 0; j < in_messages_size; j++)
+		{
+			std::shared_ptr<std::string> in_message =
+					in_fragments_.Pop_Front();
+					
+			packets_handler_.Process_Fragment(in_message);
+		}
+	}
+}
+	
+	
+//*****************************************************************************
+void CommunicationManager::Process_In_Packets()
+{
+	std::size_t in_messages_size = in_packets_.Get_Size(); 
+	
+	if (in_messages_size > 0)
+	{
+		for (std::size_t j = 0; j < in_messages_size; j++)
+		{
+			std::shared_ptr<std::string> in_message =
+					in_packets_.Pop_Front(); 
+			mavros_msgs::Mavlink mavlink_msg;
+					
+			packets_handler_.Deserialize_Mavlink_Message(in_message->c_str(), &mavlink_msg, in_message->size());
+			mavlink_publisher_.publish(mavlink_msg);
+		}
+	}
+}
+
+
+//*****************************************************************************
+void CommunicationManager::Process_Command_Responses()
+{		
+	std::size_t in_messages_size = command_responses_.Get_Size();
+	
+	if (in_messages_size > 0)
+	{
+		for (std::size_t j = 0; j < in_messages_size; j++)
+		{
+			std::shared_ptr<std::string> in_message =
+					command_responses_.Pop_Front();
+					
+			packets_handler_.Process_Command_Response(in_message->c_str());
+		}
+	}
+}
+
+
+}
+
+
+}
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1

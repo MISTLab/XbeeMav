@@ -23,7 +23,11 @@ XMLConfigParser::~XMLConfigParser()
 //*****************************************************************************
 bool XMLConfigParser::Load_Config()
 {
+<<<<<<< HEAD
 	const std::string FILE_NAME = "/home/ubuntu/ROS_WS/src/xbeemav/Resources/XBee_Config.xml";
+=======
+	const std::string FILE_NAME = "/home/mistlab/catkin_ws/src/xbee_ros_node/Resources/XBee_Config.xml";
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
 	if (Check_Config_File_Exists(FILE_NAME))
 	{

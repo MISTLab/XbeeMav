@@ -17,7 +17,11 @@ int main(int argc, char* argv[])
 
 	Mist::Xbee::CommunicationManager communication_manager;
 	const std::string& device = "/dev/ttyUSB0"; // TO DO can be introduced as command.
+<<<<<<< HEAD
 	const std::size_t baud_rate = 115200; // TO DO Can be introduced as command.
+=======
+	const std::size_t baud_rate = 230400; // TO DO Can be introduced as command.
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	Mist::Xbee::CommunicationManager::DRONE_TYPE drone_type = 
 			Mist::Xbee::CommunicationManager::DRONE_TYPE::SLAVE;
 	Mist::Xbee::CommunicationManager::RUNNING_MODE running_mode =
@@ -34,8 +38,12 @@ int main(int argc, char* argv[])
 				running_mode = Mist::Xbee::CommunicationManager::RUNNING_MODE::SWARM;
 		}
 	}
+<<<<<<< HEAD
 		
 
+=======
+	
+>>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	if (communication_manager.Init(device, baud_rate))
 		communication_manager.Run(drone_type, running_mode);
   }
