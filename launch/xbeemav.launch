@@ -7,10 +7,6 @@
 	<!--  xmee_mav Topics and Services Names -->
 	<param name="Xbee_In_From_Buzz" type="str" value="outMavlink" />
 	<param name="Xbee_Out_To_Buzz" type="str" value="inMavlink" />
-<<<<<<< HEAD
-	<param name="No_of_dev" type="int" value="3" />
-=======
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	<param name="Xbee_In_From_Controller" type="str" value="xbee_cmd" />
 	<param name="Xbee_Out_To_Controller" type="str" value="mav_dji_cmd" />
 </launch>
