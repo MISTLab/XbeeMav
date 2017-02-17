@@ -1,10 +1,6 @@
 /* CommunicationManager.h -- Communication Manager class for XBee:
 			     Handles all communications with other ROS nodes
-<<<<<<< HEAD
-			     and the serial port --     	             */
-=======
 			     and the serial port --     	                             */
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 /* ------------------------------------------------------------------------- */
 /* September 20, 2016 -- @Copyright Aymen Soussia. All rights reserved.      */
 /*                                  (aymen.soussia@gmail.com)                */
@@ -20,18 +16,9 @@
 #include<mavros_msgs/Mavlink.h>
 #include <ros/ros.h>
 
-<<<<<<< HEAD
-#include"SerialDevice.h"
-
-#define MESSAGE_CONSTANT 238
-#define ACK_MESSAGE_CONSTANT 911
-#define XBEE_MESSAGE_CONSTANT 586782343
-#define XBEE_STOP_TRANSMISSION 4355356352
-=======
 #include"PacketsHandler.h"
 #include"SerialDevice.h"
 
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
 namespace Mist
 {
@@ -72,30 +59,14 @@ private:
 
 	void Run_In_Solo_Mode(DRONE_TYPE drone_type);
 	void Run_In_Swarm_Mode();
-<<<<<<< HEAD
-	void Generate_Transmit_Request_Frame(
-			const char* const message,
-			std::string* frame,
-			int tot,
-=======
 	/*void Generate_Transmit_Request_Frame(
 			const char* const message,
 			std::string* frame,
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 			const unsigned char frame_ID = 
 			static_cast<unsigned char>(0x01),
 			const std::string& destination_adssress = "000000000000FFFF",
 			const std::string& short_destination_adress = "FFFF",
 			const std::string& broadcast_radius = "00",
-<<<<<<< HEAD
-			const std::string& options = "00");
-	void Check_In_Messages_and_Transfer_To_Topics();
-	void Display_Init_Communication_Failure();
-	void Convert_HEX_To_Bytes(const std::string& HEX_data,
-			std::string* converted_data);
-	void Calculate_and_Append_Checksum(std::string* frame);
-	void Add_Length_and_Start_Delimiter(std::string* frame);
-=======
 			const std::string& options = "00");*/
 	//void Check_In_Messages_and_Transfer_To_Topics();
 	void Display_Init_Communication_Failure();
@@ -103,7 +74,6 @@ private:
 			//std::string* converted_data);
 	//void Calculate_and_Append_Checksum(std::string* frame);
 	//void Add_Length_and_Start_Delimiter(std::string* frame);
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	void Send_Mavlink_Message_Callback(
 			const mavros_msgs::Mavlink::ConstPtr& mavlink_msg);
 	void Display_Drone_Type_and_Running_Mode(DRONE_TYPE drone_type,
@@ -111,12 +81,6 @@ private:
 	bool Serve_Flight_Controller(mavros_msgs::CommandInt::
 		Request& request, mavros_msgs::CommandInt::Response& response);
 	void Check_In_Messages_and_Transfer_To_Server();
-<<<<<<< HEAD
-	unsigned short Caculate_Checksum(std::string* frame);
-	void Send_multi_msg();
-	Mist::Xbee::SerialDevice serial_device_;
-	Thread_Safe_Deque* in_messages_;
-=======
 	void Process_In_Standard_Messages();
 	void Process_In_Acks_and_Pings();
 	void Process_In_Fragments();
@@ -130,36 +94,12 @@ private:
 	Thread_Safe_Deque in_Acks_and_Pings_;
 	Thread_Safe_Deque command_responses_;
 	Thread_Safe_Deque in_packets_;
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	ros::NodeHandle node_handle_;
 	ros::Subscriber mavlink_subscriber_;	
 	ros::Publisher mavlink_publisher_;
 	ros::ServiceClient mav_dji_client_;
 	ros::ServiceServer mav_dji_server_;
-<<<<<<< HEAD
-	/*No of robots*/
-	int no_of_dev;
-	int device_id;
-        /*Vector msgs*/
-	std::map< std::size_t, std::shared_ptr<std::string> > multi_msgs_receive;
-	std::vector<std::string> multi_msgs_send_dict;
-	/*Sending param*/
-	uint16_t sending_chunk_no, Sender_cur_checksum;
-	std::map< uint16_t, uint16_t > ack_received_dict;
-	//std::vector<uint16_t> multi_msgs_send_counter;
-	//std::vector<uint16_t> multi_msgs_sender;
-	/*Receiving param*/
-	uint16_t receiver_cur_checksum;
-	uint16_t counter;  //After implementation change this to vector.size()
-	uint16_t receiveing_cur_totalsize;
-	uint16_t steps;
-	//uint16_t multi_msg_size;
-	uint64_t message_obtmulti[600];
-	//int test_1;
-	//struct timeval t1, t2;
-=======
 	std::shared_ptr<std::thread> service_thread_; // TO DO delete !?
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 };
 
 

@@ -53,32 +53,19 @@ include_directories(
 )
 
 
-<<<<<<< HEAD
-add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp)
-target_link_libraries(xbee_mav ${catkin_LIBRARIES})
 
-add_executable(config src/main.cpp src/XBeeModule.cpp src/XMLConfigParser.cpp)
-target_link_libraries(config ${catkin_LIBRARIES})
-=======
 add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler)
 target_link_libraries(xbee_mav ${catkin_LIBRARIES})
 
 #add_executable(config src/main.cpp src/XBeeModule.cpp src/XMLConfigParser.cpp)
 #target_link_libraries(config ${catkin_LIBRARIES})
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
 #add_executable(test_controller src/TestController.cpp)
 #target_link_libraries(test_controller ${catkin_LIBRARIES})
 
-<<<<<<< HEAD
-#add_executable(test_buzz src/TestBuzz.cpp)
-#target_link_libraries(test_buzz ${catkin_LIBRARIES})
-=======
+
 add_executable(test_buzz src/TestBuzz.cpp)
 target_link_libraries(test_buzz ${catkin_LIBRARIES})
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
-
-
 
 #############
 ## Install ##
@@ -89,9 +76,4 @@ target_link_libraries(test_buzz ${catkin_LIBRARIES})
 #############
 ## Testing ##
 #############
-<<<<<<< HEAD
 
-
-
-=======
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1

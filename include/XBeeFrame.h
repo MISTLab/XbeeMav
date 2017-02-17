@@ -27,11 +27,7 @@ public:
 	~Frame();
 
 	enum {FRAME_HEADER_LENGTH = 4};
-<<<<<<< HEAD
-	enum {MAX_FRAME_BODY_LENGTH = 280}; // TO DO check value
-=======
 	enum {MAX_FRAME_BODY_LENGTH = 270}; // TO DO check value
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
 	const char* Get_Frame_Data() const;
 	char* Get_Frame_Data();
@@ -43,10 +39,7 @@ public:
 	std::size_t Get_Frame_Type() const;
 	int Get_Start_Delimiter_Position();
 	void Rearrange_Corrupted_Header();
-<<<<<<< HEAD
-=======
 	char Get_Message_Type(); // TO DO const !?
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 
 
 private:

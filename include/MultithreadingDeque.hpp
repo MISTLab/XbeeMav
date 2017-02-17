@@ -36,11 +36,7 @@ public:
 
 
 	//****************************************************************************
-<<<<<<< HEAD
-	void Push_Pack(const _T& new_data)
-=======
 	void Push_Back(const _T& new_data)
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	{
 		std::lock_guard<std::mutex> guard(mutex_);
 		deque_.push_back(new_data);
