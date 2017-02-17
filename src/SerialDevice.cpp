@@ -39,10 +39,6 @@ bool SerialDevice::Init(
 	{
 		Set_Port_Options(baud_rate);
 		Init_Frame_Type_Keys();
-<<<<<<< HEAD
-		Read_Frame_Header();
-=======
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		return true;
 	}
 	else
@@ -85,10 +81,7 @@ void SerialDevice::Send_Frame(const std::string& frame)
 //*****************************************************************************
 void SerialDevice::Run_Service()
 {
-<<<<<<< HEAD
-=======
 	Read_Frame_Header();
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	io_service_.run();
 }
 
@@ -97,25 +90,17 @@ void SerialDevice::Run_Service()
 void SerialDevice::Stop_Service()
 {
 	io_service_.post([this]() {io_service_.stop(); });
-<<<<<<< HEAD
-=======
 }
 
 
 //*****************************************************************************
 void SerialDevice::Close_Serial_Port()
 {
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 	io_service_.post([this]() {serial_port_.close(); });
 }
 
 
 //*****************************************************************************
-<<<<<<< HEAD
-Thread_Safe_Deque * SerialDevice::Get_In_Messages_Pointer()
-{
-	return &in_messages_;
-=======
 void SerialDevice::Set_In_Messages_Pointers(Thread_Safe_Deque* in_std_messages,
 			Thread_Safe_Deque* in_fragments,
 			Thread_Safe_Deque* in_Acks_and_Pings,
@@ -125,7 +110,6 @@ void SerialDevice::Set_In_Messages_Pointers(Thread_Safe_Deque* in_std_messages,
 	in_fragments_ = in_fragments;
 	in_Acks_and_Pings_ = in_Acks_and_Pings;
 	command_responses_ = command_responses;
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 }
 
 
@@ -184,15 +168,10 @@ void SerialDevice::Read_Frame_Header()
 				Read_Frame_Body();
 			}
 			else
-<<<<<<< HEAD
-				/* The header is totally corrupted, read another header. */
-				Read_Frame_Header();
-=======
 			{
 				/* The header is totally corrupted, read another header. */
 				Read_Frame_Header();
 			}
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 		}
 		else
 		{
@@ -218,17 +197,6 @@ void SerialDevice::Read_Frame_Body()
 			if (current_frame_.Get_Frame_Type() == 
 					FRAME_TYPE_KEYS[RECEIVE_PACKET])
 			{
-<<<<<<< HEAD
-				const unsigned short ELEVEN_BYTES = 11;
-				const unsigned short TWELVE_BYTES = 12;
-
-				std::shared_ptr<std::string> in_message =
-					std::make_shared<std::string>();
-				in_message->append(current_frame_.Get_Frame_Body()
-					+ ELEVEN_BYTES,
-					current_frame_.Get_Frame_Body_Length() - TWELVE_BYTES);
-				in_messages_.Push_Pack(in_message);
-=======
 				char msg_type = current_frame_.Get_Message_Type();
 				std::shared_ptr<std::string> in_message =
 					std::make_shared<std::string>();
@@ -265,7 +233,6 @@ void SerialDevice::Read_Frame_Body()
 					current_frame_.Get_Frame_Body_Length() - 2);
 				
 				command_responses_->Push_Back(in_message);
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 			}
 
 			Read_Frame_Header();
@@ -300,8 +267,6 @@ void SerialDevice::Write_Frame()
 }
 
 
-<<<<<<< HEAD
-=======
 //*****************************************************************************
 bool SerialDevice::Is_IO_Service_Stopped()
 {
@@ -316,7 +281,6 @@ void SerialDevice::Reset_IO_Service()
 }
 
 
->>>>>>> a16cf8b196cb6b63ef52ea26b8cb9a8e861d84d1
 }
 
 
