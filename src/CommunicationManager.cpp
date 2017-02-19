@@ -427,7 +427,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Server() // 
 inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		const mavros_msgs::Mavlink::ConstPtr& mavlink_msg)
 {
-	std::cout << "Received Message From Buzz" << std::endl; // TO DO delete
+	//std::cout << "Received Message From Buzz" << std::endl; // TO DO delete
 	packets_handler_.Handle_Mavlink_Message(mavlink_msg);
 }
 
