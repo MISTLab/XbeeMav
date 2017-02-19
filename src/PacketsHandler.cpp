@@ -106,7 +106,7 @@ void PacketsHandler::Handle_Mavlink_Message(const mavros_msgs::Mavlink::ConstPtr
 			fragmented_packet->at(i)->append(serialized_packet->c_str() + offset, NBR_of_bytes);
 			offset += NBR_of_bytes;
 		}
-		std::cout << "[Debug: ] Multi packets received from buzz" << std::endl;
+		std::cout << "[Debug: ] Multi packets received from buzz with framgents: "<<NBR_of_fragments << std::endl;
 		out_packets_.Push_Back({mavlink_msg->msgid, fragmented_packet});
 	}
 	else if (serialized_packet->size() < XBEE_NETWORK_MTU)
@@ -126,7 +126,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 	uint16_t offset = static_cast<uint16_t>(
 			static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(4))) << 8 |
 			static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(5))));
-	std::cout << "[Debug: ] Fragment received with id"<< fragment_ID<< std::endl;
+	std::cout << "[Debug: ] Fragment received with id"<< (int)fragment_ID<< std::endl;
 	assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
 	
 	if (assembly_map_it_ != packets_assembly_map_.end())
