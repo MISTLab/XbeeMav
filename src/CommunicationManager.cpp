@@ -157,6 +157,9 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	{
 		mavlink_publisher_ = node_handle_.advertise<mavros_msgs::Mavlink>(
 			in_messages_topic.c_str(), 1000);
+		Robot_Id_Publisher_= node_handle_.advertise<std_msgs::UInt8>(
+			"/device_id_xbee_", 1000);
+		device_id_out.data = packets_handler_.get_device_id();
 		success_2 = true;
 	}
 	else
@@ -165,9 +168,9 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	if (success_1 && success_2)
 	{
 		ros::Rate loop_rate(LOOP_RATE);
-
 		while (ros::ok())
 		{
+			Robot_Id_Publisher_.publish(device_id_out);
 			Process_In_Standard_Messages();
 			Process_In_Fragments();
 			Process_In_Acks_and_Pings();

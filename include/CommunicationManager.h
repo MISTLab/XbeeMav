@@ -10,7 +10,7 @@
 
 #include <inttypes.h>
 #include<thread>
-
+#include <std_msgs/UInt8.h>
 #include<mavros_msgs/CommandCode.h>
 #include<mavros_msgs/CommandInt.h>
 #include<mavros_msgs/Mavlink.h>
@@ -97,8 +97,10 @@ private:
 	ros::NodeHandle node_handle_;
 	ros::Subscriber mavlink_subscriber_;	
 	ros::Publisher mavlink_publisher_;
+	ros::Publisher Robot_Id_Publisher_;
 	ros::ServiceClient mav_dji_client_;
 	ros::ServiceServer mav_dji_server_;
+	std_msgs::UInt8 device_id_out;
 	std::shared_ptr<std::thread> service_thread_; // TO DO delete !?
 };
 

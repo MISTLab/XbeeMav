@@ -771,6 +771,9 @@ void PacketsHandler::Generate_AT_Command(const char* command,
 	Add_Length_and_Start_Delimiter(frame);
 }
 
+uint8_t PacketsHandler::get_device_id(){
+return device_address_;
+}
 
 }
 

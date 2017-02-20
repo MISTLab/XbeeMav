@@ -57,7 +57,7 @@ public:
 	void Delete_Packets_With_Time_Out();
 	void Deserialize_Mavlink_Message(const char * bytes,
 			mavros_msgs::Mavlink* mavlink_msg, const std::size_t msg_size);
-	
+	uint8_t get_device_id();
 	
 	
 private:
@@ -115,6 +115,7 @@ private:
 			std::string* frame,
 			const unsigned char frame_ID = 
 			static_cast<unsigned char>(0x01));
+	
 	
 	struct On_Line_Node_S
 	{
