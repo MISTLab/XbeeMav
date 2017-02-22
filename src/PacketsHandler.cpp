@@ -48,8 +48,6 @@ bool PacketsHandler::Init(SerialDevice* serial_device,
 	if (!Load_Database_Addresses())
 		return false;
 		
-	// TO DO node dicov
-		
 	Send_SL_and_SH_Commands();
 	in_packets_ = in_packets;
 	
@@ -106,7 +104,7 @@ void PacketsHandler::Handle_Mavlink_Message(const mavros_msgs::Mavlink::ConstPtr
 			fragmented_packet->at(i)->append(serialized_packet->c_str() + offset, NBR_of_bytes);
 			offset += NBR_of_bytes;
 		}
-		std::cout << "[Debug: ] Multi packets received from buzz with framgents: "<<NBR_of_fragments << std::endl;
+		
 		out_packets_.Push_Back({mavlink_msg->msgid, fragmented_packet});
 	}
 	else if (serialized_packet->size() < XBEE_NETWORK_MTU)
@@ -126,7 +124,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 	uint16_t offset = static_cast<uint16_t>(
 			static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(4))) << 8 |
 			static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(5))));
-	std::cout << "[Debug: ] Fragment received with id"<< (int)fragment_ID<< std::endl;
+	
 	assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
 	
 	if (assembly_map_it_ != packets_assembly_map_.end())
@@ -166,7 +164,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 
 
 //*****************************************************************************
-void PacketsHandler::Insert_Fragment_In_Packet_Buffer(std::string* buffer, const char* fragment, const uint16_t offset, const std::size_t length) // TO DO delete length
+void PacketsHandler::Insert_Fragment_In_Packet_Buffer(std::string* buffer, const char* fragment, const uint16_t offset, const std::size_t length)
 {
 	if (offset >= buffer->size())
 		buffer->append(fragment + FRAGMENT_HEADER_SIZE, length - FRAGMENT_HEADER_SIZE);
@@ -176,20 +174,22 @@ void PacketsHandler::Insert_Fragment_In_Packet_Buffer(std::string* buffer, const
 
 
 //*****************************************************************************
-void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string> frame) // TO DO change useless std::shared_ptr<std::string> frame args to ->c_str()
+void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string> frame)
 {
 	uint8_t packet_ID = frame->at(12);
 	uint8_t node_8_bits_address = frame->at(13);
 	
 	if (frame->at(11) == 'A')
 	{
-		/*std::lock_guard<std::mutex> guard(mutex_);
+		mutex_.lock();
 		
 		connected_network_nodes_it_ = connected_network_nodes_.find(node_8_bits_address);
 	
 		if (connected_network_nodes_it_ == connected_network_nodes_.end())
 		{
+			mutex_.unlock();
 			Add_New_Node_To_Network(node_8_bits_address);
+			mutex_.lock();
 			connected_network_nodes_it_ = connected_network_nodes_.find(node_8_bits_address);
 		}
 
@@ -202,7 +202,9 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				for (uint8_t i = 14; i < frame->size(); i++)
 					fragments_indexes_to_transmit_.insert(frame->at(i));
 			}
-		}*/
+		}
+		
+		mutex_.unlock();
 	}
 	else  if (frame->at(11) == 'P')
 	{
@@ -247,7 +249,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			}
 			
 			std::string Ack_frame;
-			Generate_Transmit_Request_Frame(Acknowledgement.c_str(), &Ack_frame, Acknowledgement.size()); // TO Do send as unicast
+			Generate_Transmit_Request_Frame(Acknowledgement.c_str(), &Ack_frame, Acknowledgement.size());
 			serial_device_->Send_Frame(Ack_frame);
 			usleep(delay_interframes_);
 			
@@ -280,9 +282,9 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 		uint64_t new_node_address = 0;
 		std::lock_guard<std::mutex> guard(mutex_);
 		
-		if (command_response[2] == static_cast<unsigned char>(0)) // TO DO check this
+		if (command_response[2] == static_cast<unsigned char>(0))
 		{
-			new_node_address = static_cast<uint64_t>( // TO DO correct this
+			new_node_address = static_cast<uint64_t>(
 			static_cast<unsigned char>(command_response[5]) << 56 |
 			static_cast<unsigned char>(command_response[6]) << 48 |
 			static_cast<unsigned char>(command_response[7]) << 40 |
@@ -302,7 +304,7 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 	}
 	else if (command_response[0] == 'S' && command_response[1] == 'H')
 	{
-		if (command_response[2] == static_cast<unsigned char>(0)) // TO DO check this
+		if (command_response[2] == static_cast<unsigned char>(0))
 		{
 			loaded_SH_ = true;
 			
@@ -312,7 +314,7 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 	}
 	else if (command_response[0] == 'S' && command_response[1] == 'L')
 	{
-		if (command_response[2] == static_cast<unsigned char>(0)) // TO DO check this
+		if (command_response[2] == static_cast<unsigned char>(0))
 		{
 			loaded_SL_ = true;
 			
@@ -352,7 +354,7 @@ void PacketsHandler::Serialize_Mavlink_Message(const mavros_msgs::Mavlink::Const
 //*****************************************************************************
 void PacketsHandler::Insert_Fragment_Header(bool single_fragment,
 		std::shared_ptr<std::string> fragment, const uint8_t packet_ID,
-		const uint8_t fragment_ID, const uint16_t offset)
+		const uint8_t fragment_ID, const uint16_t offset) 
 {	
 	if (!single_fragment)
 	{
@@ -415,7 +417,7 @@ void PacketsHandler::Process_Out_Packets()
 		{
 			Process_Out_Standard_Messages();
 			out_packet = out_packets_.Pop_Front();
-			std::cout << "Multi packets sending" << std::endl; 
+
 			Send_Packet(out_packet);
 		}
 	}
@@ -429,23 +431,19 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 	std::vector<std::string> frames;
 	
 	Init_Network_Nodes_For_New_Transmission(packet.packet_ID_, &frames, packet.packet_buffer_);
+	current_processed_packet_ID_ = packet.packet_ID_;
 	
-	std::clock_t elapsed_time = std::clock();
+	std::clock_t start_time = std::clock();
 		
-	//while (NBR_of_transmission <= optimum_MT_NBR_ && !Check_Packet_Transmitted_To_All_Nodes())
-	//{
-		//NBR_of_transmission++;
-		
+	while (std::clock() - start_time <= MAX_TIME_TO_SEND_PACKET && !Check_Packet_Transmitted_To_All_Nodes())
+	{
+		NBR_of_transmission++;
 		Transmit_Fragments(frames);
-		
-		// TO DO usleep(flow_control_time)
-		// TO DO clear fragments_IDs_to_transmit_set
 		Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
-		// TO DO sleep after ping
-	//}
+		usleep(500 * 1000);
+	}
 	
-	elapsed_time = std::clock() - elapsed_time;
-	Adjust_Optimum_MT_Number(elapsed_time, NBR_of_transmission);
+	Adjust_Optimum_MT_Number(std::clock() - start_time, NBR_of_transmission);
 }
 
 
@@ -469,6 +467,7 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 bool PacketsHandler::Load_Database_Addresses()
 {
 	const std::string FILE_PATH = "/home/ubuntu/ROS_WS/src/xbeemav/Resources/database.xml";
+	
 	
 	if (!boost::filesystem::exists(FILE_PATH))
 	{	
@@ -574,7 +573,7 @@ void PacketsHandler::Init_Network_Nodes_For_New_Transmission(const uint8_t packe
 	std::lock_guard<std::mutex> guard(mutex_);
 	fragments_indexes_to_transmit_.clear();
 	
-	for (auto it : connected_network_nodes_)
+	for (auto& it : connected_network_nodes_)
 		it.second = false;
 	
 	current_processed_packet_ID_ = packet_ID;
@@ -598,23 +597,19 @@ void PacketsHandler::Transmit_Fragments(const std::vector<std::string>& frames)
 		serial_device_->Send_Frame(frames.at(index));
 		usleep(delay_interframes_);
 	}
-			
+	
+	fragments_indexes_to_transmit_.clear();		
 }
 		
 
 //*****************************************************************************
 void PacketsHandler::Adjust_Optimum_MT_Number(const std::clock_t elapsed_time,
-		const std::size_t NBR_of_transmission) 
-{
-	if (NBR_of_transmission < optimum_MT_NBR_)
-		optimum_MT_NBR_ = NBR_of_transmission;
-	else if (NBR_of_transmission == optimum_MT_NBR_)
-	{
-		std::lock_guard<std::mutex> guard(mutex_);
-		
-		if (elapsed_time <= MAX_TIME_TO_SEND_PACKET && fragments_indexes_to_transmit_.size() > 0)
-			optimum_MT_NBR_++;
-	}
+		const std::size_t NBR_of_transmission)
+{	
+	if (NBR_of_transmission > 1 && elapsed_time < MAX_TIME_TO_SEND_PACKET)
+		delay_interframes_ += 5000;
+	else if (NBR_of_transmission == 1 && delay_interframes_ >= 5000)
+		delay_interframes_ -= 5000;
 }
 
 
