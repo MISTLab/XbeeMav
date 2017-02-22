@@ -435,7 +435,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 					/*multimsg received send ack msg*/
 					char temporary_buffer[20];
 					std::string frame;
-					std::cout << "Multi msg Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
+					//std::cout << "Multi msg Received header " <<header[0]<<"  "<<header[1]<<"  "<<header[2]<<"  "<<header[3]<<"  "<< std::endl;
 					if (header[2]==1){
 					//std::cout << "first message" << std::endl;
 					multi_msgs_receive.clear();
@@ -471,7 +471,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 							multi_msgs_receive.insert(make_pair(header[2], in_message));
 							//counter++;
 						}
-						std::cout << "multi msg counter " <<multi_msgs_receive.size() << std::endl;					
+						//std::cout << "multi msg counter " <<multi_msgs_receive.size() << std::endl;					
 						/*If the total size of msg reached transfer to topic*/
 						if(multi_msgs_receive.size()==header[3]){
 						
@@ -522,7 +522,7 @@ inline void CommunicationManager::Check_In_Messages_and_Transfer_To_Topics()
 									} */
 							}
 						
-						std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
+						//std::cout << "one multi message published in topic with size :" <<mavlink_msg.payload64.size() << std::endl;
 						mavlink_publisher_.publish(mavlink_msg);
 						multi_msgs_receive.clear();
 						receiver_cur_checksum=0;
@@ -645,7 +645,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 		uint16_t* header_16 = u64_cvt_u16(header);
 		/*buffer byte counter*/
 		int tot=0;
-		std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
+		//std::cout << "Sent header" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 		delete[] header_16;
 		/*Single frame message*/
 		if(mavlink_msg->payload64.size() <= MAX_NBR_OF_INT64){
@@ -666,7 +666,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 			uint16_t tmp_size=(uint16_t)mavlink_msg->payload64.size();
 			memcpy(cpy_buff+tot,&tmp_size,sizeof(uint64_t));
 			tot+=sizeof(uint16_t);
-			std::cout<<"tmp size in sender"<<tmp_size<< std::endl;
+			//std::cout<<"tmp size in sender"<<tmp_size<< std::endl;
 			/*Copy obt msg*/
 			memcpy(cpy_buff+tot,message_obt,( sizeof(uint64_t) )*tmp_size);
 			tot+=( sizeof(uint64_t) )*tmp_size;
@@ -739,7 +739,7 @@ inline void CommunicationManager::Send_Mavlink_Message_Callback(
 					header=0;
 					header = (uint64_t) MESSAGE_CONSTANT | ((uint64_t)check_sum << 16) | ((uint64_t)number << 32) |((uint64_t) total << 48) ;
 					header_16 = u64_cvt_u16(header);				
-					std::cout << "put header in dict" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
+					//std::cout << "put header in dict" <<header_16[0]<<"  "<<header_16[1]<<"  "<<header_16[2]<<"  "<<header_16[3]<<"  "<< std::endl;
 					memset(temporary_buffer, 0, MAX_BUFFER_SIZE);
 					/*converted_bytes = sprintf(
 							temporary_buffer, "%" PRIu64 " ",
@@ -799,13 +799,13 @@ void CommunicationManager::Send_multi_msg(){
 		}	
 
 		else{
-			std::cout << "current size of ack in sender " <<ack_received_dict.size()<<"No. of devices"<<(uint16_t) no_of_dev<< std::endl;
+			//std::cout << "current size of ack in sender " <<ack_received_dict.size()<<"No. of devices"<<(uint16_t) no_of_dev<< std::endl;
 			if((uint16_t)ack_received_dict.size() == (uint16_t) (no_of_dev)-1){
 				sending_chunk_no++;
 				ack_received_dict.clear();
 				//std::cout << "sending next msg"<< std::endl;
 			}
-			std::cout << "Sent frame no. " <<sending_chunk_no+1 << std::endl;
+			//std::cout << "Sent frame no. " <<sending_chunk_no+1 << std::endl;
 			//uint64_t tmp_printer;
 			//std::cout<<"Current msg in string "<<multi_msgs_send_dict.at(sending_chunk_no)<< std::endl;
 			//sscanf(multi_msgs_send_dict.at(sending_chunk_no).c_str(), "%" PRIu64 " ",&tmp_printer);
