@@ -130,7 +130,7 @@ Each drone is running a dummy flight controller node "test_controller". Accordin
 
 **Fig.2:** ROS nodes running on the drone:
 ![][fig2]
-[fig2]: https://github.com/MISTLab/XbeeMav/tree/master/Resources/Fig1.png "Fig.2"
+[fig2]: https://github.com/MISTLab/XbeeMav/tree/master/Resources/Fig2.png "Fig.2"
 
 The communication between both drones is performed with Xbees. The “xbee_mav” node (**Fig.2**) will handle all communications with other ROS nodes (test_controller(Flight Controller) or test_buzz (ROS Buzz)) and the connected Xbee device. Therefore, both Xbees must be configured for Digi-Mesh with the maximum baud rate (230400).
 We recognize two modes of communications:
