@@ -57,8 +57,8 @@ include_directories(
 add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler)
 target_link_libraries(xbee_mav ${catkin_LIBRARIES})
 
-#add_executable(config src/main.cpp src/XBeeModule.cpp src/XMLConfigParser.cpp)
-#target_link_libraries(config ${catkin_LIBRARIES})
+add_executable(config src/main.cpp src/XBeeModule.cpp src/XMLConfigParser.cpp)
+target_link_libraries(config ${catkin_LIBRARIES})
 
 #add_executable(test_controller src/TestController.cpp)
 #target_link_libraries(test_controller ${catkin_LIBRARIES})
