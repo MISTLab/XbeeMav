@@ -13,5 +13,6 @@
 		<Device Address= "10" >0013A200415A9DE4</Device>
 		<Device Address= "11" >0013A200415A9DDF</Device>
 		<Device Address= "12" >0013A200415A9DDE</Device>
+		<Device Address= "13" >0013A200415A9DE8</Device>
 
 </Addresses>

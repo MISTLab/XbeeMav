@@ -466,7 +466,7 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 //*****************************************************************************
 bool PacketsHandler::Load_Database_Addresses()
 {
-	const std::string FILE_PATH = "/home/ubuntu/ROS_WS/src/xbeemav/Resources/database.xml";
+	const std::string FILE_PATH = "/home/vivek/catkin_ws/src/xbee/Resources/database.xml";
 	
 	
 	if (!boost::filesystem::exists(FILE_PATH))
