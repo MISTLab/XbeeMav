@@ -48,7 +48,7 @@ bool CommunicationManager::Init(
 		std::clock_t elapsed_time = std::clock();
 		bool device_ID_loaded = false;
 		
-		while (std::clock() - elapsed_time <= 30000)
+		while (std::clock() - elapsed_time <= 300000)
 		{
 			Process_Command_Responses();
 			
