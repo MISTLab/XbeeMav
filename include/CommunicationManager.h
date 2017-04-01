@@ -15,7 +15,8 @@
 #include<mavros_msgs/CommandInt.h>
 #include<mavros_msgs/Mavlink.h>
 #include <ros/ros.h>
-
+#include <mavros_msgs/ParamGet.h>
+#include <mavros_msgs/ParamValue.h>
 #include"PacketsHandler.h"
 #include"SerialDevice.h"
 
@@ -86,6 +87,7 @@ private:
 	void Process_In_Fragments();
 	void Process_In_Packets();
 	void Process_Command_Responses();
+	bool Get_ID(mavros_msgs::ParamGet::Request& req, mavros_msgs::ParamGet::Response& res);
 
 	Mist::Xbee::SerialDevice serial_device_;
 	Mist::Xbee::PacketsHandler packets_handler_;
@@ -97,9 +99,10 @@ private:
 	ros::NodeHandle node_handle_;
 	ros::Subscriber mavlink_subscriber_;	
 	ros::Publisher mavlink_publisher_;
-	ros::Publisher Robot_Id_Publisher_;
+	//ros::Publisher Robot_Id_Publisher_;
 	ros::ServiceClient mav_dji_client_;
 	ros::ServiceServer mav_dji_server_;
+	ros::ServiceServer Robot_Id_;
 	std_msgs::UInt8 device_id_out;
 	std::shared_ptr<std::thread> service_thread_; // TO DO delete !?
 };
