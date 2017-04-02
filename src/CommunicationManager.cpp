@@ -143,7 +143,7 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	std::string in_messages_topic;
 	bool success_1 = false;
 	bool success_2 = false;
-	Robot_Id_ = node_handle_.advertiseService("/Robot_ID_srv", &CommunicationManager::Get_ID, this);
+	StatusSrv_ = node_handle_.advertiseService("/xbee_status", &CommunicationManager::Get_Param, this);
 	if (node_handle_.getParam("Xbee_In_From_Buzz", out_messages_topic))
 	{
 		mavlink_subscriber_ = node_handle_.subscribe(out_messages_topic.c_str(), 1000,
@@ -157,9 +157,6 @@ void CommunicationManager::Run_In_Swarm_Mode()
 	{
 		mavlink_publisher_ = node_handle_.advertise<mavros_msgs::Mavlink>(
 			in_messages_topic.c_str(), 1000);
-		//Robot_Id_Publisher_= node_handle_.advertise<std_msgs::UInt8>(
-		//	"/device_id_xbee_", 1000);
-		//device_id_out.data = packets_handler_.get_device_id();
 		success_2 = true;
 	}
 	else
@@ -171,7 +168,6 @@ void CommunicationManager::Run_In_Swarm_Mode()
 		ros::Rate loop_rate(LOOP_RATE);
 		while (ros::ok())
 		{
-			//Robot_Id_Publisher_.publish(device_id_out);
 			Process_In_Standard_Messages();
 			Process_In_Fragments();
 			Process_In_Acks_and_Pings();
@@ -545,10 +541,16 @@ void CommunicationManager::Process_Command_Responses()
 	}
 }
 
-bool CommunicationManager::Get_ID (mavros_msgs::ParamGet::Request& req, mavros_msgs::ParamGet::Response& res){
-mavros_msgs::ParamValue id;
-id.integer=packets_handler_.get_device_id();
-res.value= id;
+bool CommunicationManager::Get_Param (mavros_msgs::ParamGet::Request& req, mavros_msgs::ParamGet::Response& res){
+mavros_msgs::ParamValue val;
+if(req.param_id=="id"){
+	val.integer=packets_handler_.get_device_id();
+} else if(req.param_id=="rssi"){
+	val.integer=-1;
+} else if(req.param_id=="pl"){
+	val.integer=-1;
+}
+res.value= val;
 res.success=true;
 return true;
 }
