@@ -11,6 +11,7 @@ set (BOOST_INCLUDEDIR "/usr/include")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  mavros_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -37,7 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES xbee_ros_node
-  CATKIN_DEPENDS roscpp std_msgs
+  CATKIN_DEPENDS roscpp std_msgs mavros_msgs
 #  DEPENDS system_lib
 )
 
