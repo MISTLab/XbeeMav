@@ -172,7 +172,7 @@ void CommunicationManager::Run_In_Swarm_Mode()
 			Process_In_Fragments();
 			Process_In_Acks_and_Pings();
 			Process_In_Packets();
-			//packets_handler_.Delete_Packets_With_Time_Out();
+			packets_handler_.Delete_Packets_With_Time_Out();
 			ros::spinOnce();
 	    	loop_rate.sleep();
 		}

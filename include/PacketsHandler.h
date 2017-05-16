@@ -158,7 +158,7 @@ private:
 	void check_Fragments_and_rebroadcast();
 	struct transmission_packet_s cur_frame;
 	std::map<int,std::string> pkt_assembler;
-	void Send_Done_Packet_Ping(const uint8_t packet_ID, const uint8_t total_NBR_of_fragments);
+	
 };
 
 

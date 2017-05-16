@@ -415,8 +415,10 @@ void PacketsHandler::Delete_Packets_With_Time_Out()
 {	
 	for(auto& iterator: packets_assembly_map_)
 	{
-		if (std::clock_t() - iterator.second.time_since_creation_ > MAX_TIME_TO_SEND_PACKET && iterator.second.time_since_creation_ != 0)
+		if (std::clock_t() - iterator.second.time_since_creation_ > MAX_TIME_TO_SEND_PACKET && iterator.second.time_since_creation_ != 0){
 			iterator.second = {};
+			
+		}
 	}
 }
 
@@ -515,23 +517,7 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 	
 }
 
-void PacketsHandler::Send_Done_Packet_Ping(const uint8_t packet_ID, const uint8_t total_NBR_of_fragments)
-{
-	std::string ping_message = "D";
-	std::string ping_frame;
-	ping_message.push_back(packet_ID);
-	ping_message.push_back(device_address_);
-	ping_message.push_back(total_NBR_of_fragments);
-	Generate_Transmit_Request_Frame(ping_message.c_str(), &ping_frame, ping_message.size());
-	cur_ping_frame=ping_frame;
-	serial_device_->Send_Frame(ping_frame);
-	usleep(delay_interframes_);
-	
-	std::cout<<"Received of packet ping sent for id : "<<(int)packet_ID<<" my address "<<(int)device_address_<<" total: "<<(int)total_NBR_of_fragments<<" end rebroadcast cnt: "<<end_packet_count <<std::endl;
-	
-}
 void PacketsHandler::Process_end_packet_pings(){
-	std::cout<<"total coonections: "<<(int)connected_network_nodes_.size()<<std::endl;
 	if(end_packet_count != -1){
 		if(end_packet_count < MAX_BROADCAST_END_PACKET){
 			Send_End_Of_Packet_Ping(cur_frame.Packet_ID,cur_frame.Packet_size);
