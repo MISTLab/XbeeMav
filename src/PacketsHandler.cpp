@@ -29,7 +29,8 @@ PacketsHandler::PacketsHandler():
 	loaded_SH_(false),
 	optimum_MT_NBR_(3),
 	delay_interframes_(100 * 1000),
-	end_packet_count(-1)
+	end_packet_count(-1),
+	cur_frame()
 {
 }
 
@@ -131,7 +132,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 	assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
 	//std::map<uint8_t, Reassembly_Packet_S>::iterator fragment_map_it_ = packets_assembly_map_.begin();
 	//for(;fragment_map_it_!=packets_assembly_map_.end();fragment_map_it_++){
-		std::cout<<"[Debug] fragment id received: "<<(int)fragment_ID<<" from: "<<(int)node_8_bits_address<<" Packet id: "<<packet_ID<<" offset: "<<(int) offset<<std::endl;
+		std::cout<<"[Debug] fragment id received: "<<(int)fragment_ID<<" from: "<<(int)node_8_bits_address<<" Packet id: "<<(int)packet_ID<<" offset: "<<(int) offset<<std::endl;
 		
 		
 	//}
@@ -210,6 +211,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				for (uint8_t i = 14; i < frame->size(); i++){
 					fragments_indexes_to_transmit_.insert(frame->at(i));
 					std::cout<<"Index to transmit in ack :"<<(int)frame->at(i)<<" sent by "<<(int)connected_network_nodes_it_->first<<std::endl;
+					if(frame->size()-14 > 0) end_packet_count=0;
 				}
 			}
 		}
@@ -450,26 +452,31 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 {
 	std::size_t NBR_of_transmission = 0; 
 	std::vector<std::string> frames;
-	
+	cur_frame.Packet_ID=packet.packet_ID_;
+	cur_frame.Packet_size=packet.packet_buffer_->size();
 	Init_Network_Nodes_For_New_Transmission(packet.packet_ID_, &frames, packet.packet_buffer_);
 	current_processed_packet_ID_ = packet.packet_ID_;
 	//cur_frames.reserve(frames.size());
-	for(int i=0; i<(int)frames.size();i++){
-	cur_frames.push_back(frames[i]);
+	std::cout<<"Total number of frames: "<< (int)frames.size()<<std::endl;
+	for(auto i=0; i<frames.size();i++){
+	std::cout<<i<<" : original: "<<frames[i]<<std::endl;
+	cur_frame.frames.push_back(frames[i]);
+	std::cout<<" copy: "<<cur_frame.frames[i]<<std::endl;
 	}
 	std::clock_t start_time = std::clock();
-	/*How will this work, the code will be stuck here isn't it ???*/	
-	while (std::clock() - start_time <= MAX_TIME_TO_SEND_PACKET && !Check_Packet_Transmitted_To_All_Nodes())
-	{
+	/*How will this work, this is a blocking code, the code will be stuck here isn't it ???*/	
+	//while (std::clock() - start_time <= MAX_TIME_TO_SEND_PACKET && !Check_Packet_Transmitted_To_All_Nodes())
+	//{
 		NBR_of_transmission++;
 		Transmit_Fragments(frames);
 		Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
 		usleep(500 * 1000);
-		Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
-		usleep(500 * 1000);
-	}
+		//Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
+		//usleep(500 * 1000);
+		end_packet_count=0;
+	//}
 	
-	Adjust_Optimum_MT_Number(std::clock() - start_time, NBR_of_transmission);
+	//Adjust_Optimum_MT_Number(std::clock() - start_time, NBR_of_transmission);
 }
 
 
@@ -481,21 +488,20 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 	ping_message.push_back(packet_ID);
 	ping_message.push_back(device_address_);
 	ping_message.push_back(total_NBR_of_fragments);
-	
 	Generate_Transmit_Request_Frame(ping_message.c_str(), &ping_frame, ping_message.size());
 	cur_ping_frame=ping_frame;
 	serial_device_->Send_Frame(ping_frame);
 	usleep(delay_interframes_);
-	end_packet_count=0;
+	
 	std::cout<<"end of packet ping sent for id : "<<(int)packet_ID<<" my address "<<(int)device_address_<<" total: "<<(int)total_NBR_of_fragments<<" end rebroadcast cnt: "<<end_packet_count <<std::endl;
 	
 }
 
 void PacketsHandler::Process_end_packet_pings(){
 	if(end_packet_count != -1){
-		if(end_packet_count < 5){
-			serial_device_->Send_Frame(cur_ping_frame);
-			usleep(delay_interframes_);
+		if(end_packet_count < 3){
+			Send_End_Of_Packet_Ping(cur_frame.Packet_ID,cur_frame.Packet_size);
+			usleep(500 * 1000);
 			end_packet_count++;
 		}
 		else{
@@ -645,7 +651,7 @@ void PacketsHandler::Transmit_Fragments(const std::vector<std::string>& frames)
 
 void PacketsHandler::check_Fragments_and_rebroadcast(){
 	if(!fragments_indexes_to_transmit_.empty()){
-		Transmit_Fragments(cur_frames);
+		Transmit_Fragments(cur_frame.frames);
 	}
 }
 

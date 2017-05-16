@@ -75,6 +75,14 @@ private:
 		std::clock_t time_since_creation_; // TO DO use it to delete packets with time out
 	};
 	
+	struct transmission_packet_s
+	{
+		uint8_t Packet_ID;
+		std::vector<std::string> frames;
+		uint16_t Packet_size;
+		transmission_packet_s(){}
+	};
+	
 	void Insert_Fragment_In_Packet_Buffer(std::string* buffer,
 			const char* fragment, const uint16_t offset, const std::size_t length);
 	void Add_New_Node_To_Network(const uint8_t new_node_address);
@@ -147,8 +155,8 @@ private:
 	std::string cur_ping_frame;
 	int end_packet_count;
 	void Process_end_packet_pings();
-	std::vector<std::string> cur_frames;
 	void check_Fragments_and_rebroadcast();
+	struct transmission_packet_s cur_frame;
 };
 
 
