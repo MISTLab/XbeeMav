@@ -28,7 +28,7 @@ PacketsHandler::PacketsHandler():
 	loaded_SL_(false),
 	loaded_SH_(false),
 	optimum_MT_NBR_(3),
-	delay_interframes_(500 * 1000),
+	delay_interframes_(100 * 1000),
 	end_packet_count(-1),
 	cur_frame()
 {
@@ -136,7 +136,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		
 		
 	//}
-	if (assembly_map_it_->first == node_8_bits_address)
+	if (assembly_map_it_ != packets_assembly_map_.end() )
 	{
 		if (assembly_map_it_->second.packet_ID_ == packet_ID)
 		{
@@ -169,7 +169,6 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 		assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 		assembly_map_it_->second.time_since_creation_ = std::clock();
-		std::cout<<"new node added"<<std::endl;
 	}
 }
 
@@ -196,7 +195,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 		
 		connected_network_nodes_it_ = connected_network_nodes_.find(node_8_bits_address);
 	
-		if (connected_network_nodes_it_ == connected_network_nodes_.end() && connected_network_nodes_it_->first !=node_8_bits_address)
+		if (connected_network_nodes_it_ == connected_network_nodes_.end() )
 		{
 			mutex_.unlock();
 			Add_New_Node_To_Network(node_8_bits_address);
@@ -232,7 +231,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 		//Generate_Transmit_Request_Frame(PING_ACk.c_str(), &ping_Ack_frame, PING_ACk.size());
 		//serial_device_->Send_Frame(ping_Ack_frame);
 		//usleep(delay_interframes_);
-		if (assembly_map_it_ == packets_assembly_map_.end() && assembly_map_it_->first != node_8_bits_address)
+		if (assembly_map_it_ == packets_assembly_map_.end() )
 		{
 			Add_New_Node_To_Network(node_8_bits_address);
 			assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
@@ -460,10 +459,13 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 	current_processed_packet_ID_ = packet.packet_ID_;
 	//cur_frames.reserve(frames.size());
 	std::cout<<"Total number of frames: "<< (int)frames.size()<<std::endl;
+	cur_frame.frames.clear();
 	for(auto i=0; i<frames.size();i++){
-	//std::cout<<i<<" : original: "<<frames[i]<<std::endl;
-	cur_frame.frames.push_back(frames[i]);
-	//std::cout<<" copy: "<<cur_frame.frames[i]<<std::endl;
+	/*Keep in mind have to clear this*/
+	std::cout<<i<<" : original: "<<frames[i]<<std::endl;
+	cur_frame.frames.push_back("");
+	cur_frame.frames[i]+=frames[i];
+	std::cout<<" copy: "<<cur_frame.frames[i]<<std::endl;
 	}
 	std::clock_t start_time = std::clock();
 	/*How will this work, this is a blocking code, the code will be stuck here isn't it ???*/	
