@@ -31,7 +31,8 @@ PacketsHandler::PacketsHandler():
 	delay_interframes_(100 * 1000),
 	end_packet_count(-1),
 	cur_frame(),
-	packets_assembly_map_()
+	packets_assembly_map_(),
+	pkt_assembler()
 {
 }
 
@@ -147,8 +148,9 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 			{
 				if (assembly_map_it_->second.received_fragments_IDs_.size() == 0)
 					assembly_map_it_->second.time_since_creation_ = std::clock();
-				
-				Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
+				pkt_assembler[fragment_ID]="";
+				pkt_assembler[fragment_ID]+=*fragment;
+				//Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 				assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 				std::cout<<"inserted fragment: "<<(int)fragment_ID<<" offset: "<<(int)offset<<" fragment size: "<<(int)fragment->size()<<std::endl;
 			}
@@ -156,8 +158,11 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		else
 		{
 			assembly_map_it_->second = {};
+			pkt_assembler.clear();
 			assembly_map_it_->second.packet_ID_ = packet_ID;
-			Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
+			pkt_assembler[fragment_ID]="";
+			pkt_assembler[fragment_ID]+=*fragment;
+			//Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 			assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 			assembly_map_it_->second.time_since_creation_ = std::clock();
 		}
@@ -167,7 +172,10 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		Add_New_Node_To_Network(node_8_bits_address);
 		assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
 		assembly_map_it_->second.packet_ID_ = packet_ID;
-		Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
+		pkt_assembler.clear();
+		pkt_assembler[fragment_ID]="";
+		pkt_assembler[fragment_ID]+=*fragment;
+		//Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 		assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 		assembly_map_it_->second.time_since_creation_ = std::clock();
 	}
@@ -249,6 +257,13 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			
 			if (assembly_map_it_->second.received_fragments_IDs_.size() == packet_size)
 			{
+				uint16_t offset =0;
+				std::map<int,std::string>::iterator pkt_assembler_it=pkt_assembler.begin();
+				for(;pkt_assembler_it != pkt_assembler.end();++pkt_assembler_it){
+					
+					Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, pkt_assembler_it->second.c_str(), offset, pkt_assembler_it->second.size());
+					offset+=250;
+				}
 				in_packets_->Push_Back(std::make_shared<std::string>(assembly_map_it_->second.packet_buffer_));
 				assembly_map_it_->second.packet_buffer_.clear();
 				assembly_map_it_->second.received_fragments_IDs_.clear();
