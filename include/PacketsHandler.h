@@ -158,7 +158,7 @@ private:
 	void check_Fragments_and_rebroadcast();
 	struct transmission_packet_s cur_frame;
 	std::map<int,std::string> pkt_assembler;
-	
+	uint16_t old_packet;
 };
 
 

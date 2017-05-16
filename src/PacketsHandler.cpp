@@ -155,7 +155,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 				std::cout<<"inserted fragment: "<<(int)fragment_ID<<" offset: "<<(int)offset<<" fragment size: "<<(int)fragment->size()<<std::endl;
 			}
 		}
-		else
+		else if(packet_ID != old_packet)
 		{
 			assembly_map_it_->second = {};
 			pkt_assembler.clear();
@@ -167,7 +167,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 			assembly_map_it_->second.time_since_creation_ = std::clock();
 		}
 	}
-	else
+	else if(packet_ID != old_packet)
 	{
 		Add_New_Node_To_Network(node_8_bits_address);
 		assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
@@ -240,7 +240,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 		//Generate_Transmit_Request_Frame(PING_ACk.c_str(), &ping_Ack_frame, PING_ACk.size());
 		//serial_device_->Send_Frame(ping_Ack_frame);
 		//usleep(delay_interframes_);
-		if (assembly_map_it_ == packets_assembly_map_.end() )
+		if (assembly_map_it_ == packets_assembly_map_.end() && packet_ID != old_packet)
 		{
 			Add_New_Node_To_Network(node_8_bits_address);
 			assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
@@ -268,21 +268,16 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				assembly_map_it_->second.packet_buffer_.clear();
 				assembly_map_it_->second.received_fragments_IDs_.clear();
 				assembly_map_it_->second.time_since_creation_ = 0;
+				old_packet=packet_ID;
 				std::cout<<"[Debug: ] Multi-packet Transferred"<<std::endl;
 				//if(!cur_frame.empty()) cur_frames.clear();
 			}
-			else if(!assembly_map_it_->second.received_fragments_IDs_.empty())
+			else if(assembly_map_it_->second.time_since_creation_ !=0)
 			{
 				std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.begin();
 				uint8_t j = 0;
-				for(;it!=assembly_map_it_->second.received_fragments_IDs_.end(); ++it){
-					while(j != *it){
-						Acknowledgement.push_back(j);
-						j++;
-					}
-
-				}
-				/*while (j <= packet_size - 1)
+				
+				while (j <= packet_size - 1)
 				{
 					if (j != *it)
 						Acknowledgement.push_back(j);
@@ -290,7 +285,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 						it++;
 
 					j++;
-				}*/
+				}
 			}
 			
 			std::string Ack_frame;
@@ -299,7 +294,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			usleep(delay_interframes_);
 			
 		}
-		else
+		else if(packet_ID != old_packet)
 		{
 			assembly_map_it_->second = {};
 			assembly_map_it_->second.packet_ID_ = packet_ID;
