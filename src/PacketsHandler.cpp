@@ -22,7 +22,7 @@ PacketsHandler::PacketsHandler():
 	MAX_PACEKT_SIZE(64000),
 	XBEE_NETWORK_MTU(250),
 	FRAGMENT_HEADER_SIZE(6),
-	MAX_TIME_TO_SEND_PACKET(30000),
+	MAX_TIME_TO_SEND_PACKET(3000000),
 	START_DLIMITER(static_cast<unsigned char>(0x7E)),
 	device_64_bits_address_("12345678"),
 	loaded_SL_(false),
@@ -499,7 +499,7 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 
 void PacketsHandler::Process_end_packet_pings(){
 	if(end_packet_count != -1){
-		if(end_packet_count < 3){
+		if(end_packet_count < 5){
 			Send_End_Of_Packet_Ping(cur_frame.Packet_ID,cur_frame.Packet_size);
 			usleep(500 * 1000);
 			end_packet_count++;
