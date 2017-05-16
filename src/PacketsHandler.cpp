@@ -28,7 +28,7 @@ PacketsHandler::PacketsHandler():
 	loaded_SL_(false),
 	loaded_SH_(false),
 	optimum_MT_NBR_(3),
-	delay_interframes_(100 * 1000),
+	delay_interframes_(100 * 5000),
 	end_packet_count(-1),
 	cur_frame()
 {
@@ -136,7 +136,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		
 		
 	//}
-	if (assembly_map_it_ != packets_assembly_map_.end() && assembly_map_it_->first !=node_8_bits_address)
+	if (assembly_map_it_->first == node_8_bits_address)
 	{
 		if (assembly_map_it_->second.packet_ID_ == packet_ID)
 		{
@@ -169,6 +169,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 		assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 		assembly_map_it_->second.time_since_creation_ = std::clock();
+		std::cout<<"new node added"<<std::endl;
 	}
 }
 
@@ -239,7 +240,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			assembly_map_it_->second.time_since_creation_ = std::clock();
 		}
 		
-		if (assembly_map_it_->second.packet_ID_ == packet_ID && !assembly_map_it_->second.packet_buffer_.empty())
+		if (assembly_map_it_->second.packet_ID_ == packet_ID )
 		{
 			std::string Acknowledgement = "A";
 			Acknowledgement.push_back(packet_ID);
@@ -254,7 +255,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				assembly_map_it_->second.time_since_creation_ = 0;
 				//if(!cur_frame.empty()) cur_frames.clear();
 			}
-			else
+			else if(!assembly_map_it_->second.packet_buffer_.empty())
 			{
 				std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.begin();
 				uint8_t j = 0;
@@ -460,9 +461,9 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 	//cur_frames.reserve(frames.size());
 	std::cout<<"Total number of frames: "<< (int)frames.size()<<std::endl;
 	for(auto i=0; i<frames.size();i++){
-	std::cout<<i<<" : original: "<<frames[i]<<std::endl;
+	//std::cout<<i<<" : original: "<<frames[i]<<std::endl;
 	cur_frame.frames.push_back(frames[i]);
-	std::cout<<" copy: "<<cur_frame.frames[i]<<std::endl;
+	//std::cout<<" copy: "<<cur_frame.frames[i]<<std::endl;
 	}
 	std::clock_t start_time = std::clock();
 	/*How will this work, this is a blocking code, the code will be stuck here isn't it ???*/	
