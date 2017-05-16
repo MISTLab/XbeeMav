@@ -28,7 +28,7 @@ PacketsHandler::PacketsHandler():
 	loaded_SL_(false),
 	loaded_SH_(false),
 	optimum_MT_NBR_(3),
-	delay_interframes_(100 * 5000),
+	delay_interframes_(500 * 1000),
 	end_packet_count(-1),
 	cur_frame()
 {
