@@ -131,7 +131,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 	assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
 	//std::map<uint8_t, Reassembly_Packet_S>::iterator fragment_map_it_ = packets_assembly_map_.begin();
 	//for(;fragment_map_it_!=packets_assembly_map_.end();fragment_map_it_++){
-		std::cout<<"[Debug] Packet id received: "<<(int)fragment_ID<<std::endl;
+		std::cout<<"[Debug] fragment id received: "<<(int)fragment_ID<<" from: "<<(int)node_8_bits_address<<" Packet id: "<<packet_ID<<" offset: "<<(int) offset<<std::endl;
 		
 		
 	//}
@@ -458,11 +458,13 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 	cur_frames.push_back(frames[i]);
 	}
 	std::clock_t start_time = std::clock();
-		
+	/*How will this work, the code will be stuck here isn't it ???*/	
 	while (std::clock() - start_time <= MAX_TIME_TO_SEND_PACKET && !Check_Packet_Transmitted_To_All_Nodes())
 	{
 		NBR_of_transmission++;
 		Transmit_Fragments(frames);
+		Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
+		usleep(500 * 1000);
 		Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
 		usleep(500 * 1000);
 	}
