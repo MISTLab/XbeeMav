@@ -478,10 +478,8 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 	cur_frame.frames.clear();
 	for(auto i=0; i<frames.size();i++){
 	/*Keep in mind have to clear this*/
-	std::cout<<i<<" : original: "<<frames[i]<<std::endl;
 	cur_frame.frames.push_back("");
 	cur_frame.frames[i]+=frames[i];
-	std::cout<<" copy: "<<cur_frame.frames[i]<<std::endl;
 	}
 	std::clock_t start_time = std::clock();
 	/*How will this work, this is a blocking code, the code will be stuck here isn't it ???*/	
@@ -517,7 +515,23 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 	
 }
 
+void PacketsHandler::Send_Done_Packet_Ping(const uint8_t packet_ID, const uint8_t total_NBR_of_fragments)
+{
+	std::string ping_message = "D";
+	std::string ping_frame;
+	ping_message.push_back(packet_ID);
+	ping_message.push_back(device_address_);
+	ping_message.push_back(total_NBR_of_fragments);
+	Generate_Transmit_Request_Frame(ping_message.c_str(), &ping_frame, ping_message.size());
+	cur_ping_frame=ping_frame;
+	serial_device_->Send_Frame(ping_frame);
+	usleep(delay_interframes_);
+	
+	std::cout<<"Received of packet ping sent for id : "<<(int)packet_ID<<" my address "<<(int)device_address_<<" total: "<<(int)total_NBR_of_fragments<<" end rebroadcast cnt: "<<end_packet_count <<std::endl;
+	
+}
 void PacketsHandler::Process_end_packet_pings(){
+	std::cout<<"total coonections: "<<(int)connected_network_nodes_.size()<<std::endl;
 	if(end_packet_count != -1){
 		if(end_packet_count < MAX_BROADCAST_END_PACKET){
 			Send_End_Of_Packet_Ping(cur_frame.Packet_ID,cur_frame.Packet_size);
