@@ -28,7 +28,8 @@ PacketsHandler::PacketsHandler():
 	loaded_SL_(false),
 	loaded_SH_(false),
 	optimum_MT_NBR_(3),
-	delay_interframes_(100 * 1000)
+	delay_interframes_(100 * 1000),
+	end_packet_count(-1)
 {
 }
 
@@ -74,6 +75,8 @@ void PacketsHandler::Run()
 	{
 		Process_Out_Standard_Messages();
 		Process_Out_Packets();
+		Process_end_packet_pings();
+		check_Fragments_and_rebroadcast();
 	}
 }
 
@@ -95,7 +98,7 @@ void PacketsHandler::Handle_Mavlink_Message(const mavros_msgs::Mavlink::ConstPtr
 		std::size_t NBR_of_bytes = 0;
 		std::size_t NBR_of_fragments = std::ceil(
 			static_cast<float>(serialized_packet->size()) / XBEE_NETWORK_MTU);
-		
+		std::cout<<"[Debug]sent no of fragments: "<<NBR_of_fragments<<std::endl;
 		for (uint8_t i = 0; i < NBR_of_fragments; i++)
 		{
 			fragmented_packet->push_back(std::make_shared<std::string>());
@@ -126,8 +129,13 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 			static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(5))));
 	
 	assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
-	
-	if (assembly_map_it_ != packets_assembly_map_.end())
+	//std::map<uint8_t, Reassembly_Packet_S>::iterator fragment_map_it_ = packets_assembly_map_.begin();
+	//for(;fragment_map_it_!=packets_assembly_map_.end();fragment_map_it_++){
+		std::cout<<"[Debug] Packet id received: "<<(int)fragment_ID<<std::endl;
+		
+		
+	//}
+	if (assembly_map_it_ != packets_assembly_map_.end() && assembly_map_it_->first !=node_8_bits_address)
 	{
 		if (assembly_map_it_->second.packet_ID_ == packet_ID)
 		{
@@ -185,7 +193,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 		
 		connected_network_nodes_it_ = connected_network_nodes_.find(node_8_bits_address);
 	
-		if (connected_network_nodes_it_ == connected_network_nodes_.end())
+		if (connected_network_nodes_it_ == connected_network_nodes_.end() && connected_network_nodes_it_->first !=node_8_bits_address)
 		{
 			mutex_.unlock();
 			Add_New_Node_To_Network(node_8_bits_address);
@@ -199,8 +207,10 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
   				connected_network_nodes_it_->second = true;
 			else
 			{
-				for (uint8_t i = 14; i < frame->size(); i++)
+				for (uint8_t i = 14; i < frame->size(); i++){
 					fragments_indexes_to_transmit_.insert(frame->at(i));
+					std::cout<<"Index to transmit in ack :"<<(int)frame->at(i)<<" sent by "<<(int)connected_network_nodes_it_->first<<std::endl;
+				}
 			}
 		}
 		
@@ -209,8 +219,16 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 	else  if (frame->at(11) == 'P')
 	{
 		assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
-		
-		if (assembly_map_it_ == packets_assembly_map_.end())
+		std::cout<<"assembly_map_it in Pings received"<<(int)assembly_map_it_->first<<std::endl;
+		/*Send everybody that you read the end ping*/
+		//std::string PING_ACk = "R";
+		//PING_ACk.push_back(packet_ID);
+		//PING_ACk.push_back(device_address_);
+		//std::string ping_Ack_frame;
+		//Generate_Transmit_Request_Frame(PING_ACk.c_str(), &ping_Ack_frame, PING_ACk.size());
+		//serial_device_->Send_Frame(ping_Ack_frame);
+		//usleep(delay_interframes_);
+		if (assembly_map_it_ == packets_assembly_map_.end() && assembly_map_it_->first != node_8_bits_address)
 		{
 			Add_New_Node_To_Network(node_8_bits_address);
 			assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
@@ -218,7 +236,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			assembly_map_it_->second.time_since_creation_ = std::clock();
 		}
 		
-		if (assembly_map_it_->second.packet_ID_ == packet_ID)
+		if (assembly_map_it_->second.packet_ID_ == packet_ID && !assembly_map_it_->second.packet_buffer_.empty())
 		{
 			std::string Acknowledgement = "A";
 			Acknowledgement.push_back(packet_ID);
@@ -231,6 +249,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				assembly_map_it_->second.packet_buffer_.clear();
 				assembly_map_it_->second.received_fragments_IDs_.clear();
 				assembly_map_it_->second.time_since_creation_ = 0;
+				//if(!cur_frame.empty()) cur_frames.clear();
 			}
 			else
 			{
@@ -260,6 +279,8 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			assembly_map_it_->second.packet_ID_ = packet_ID;
 		}
 	}
+
+
 }
 
 
@@ -432,7 +453,10 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 	
 	Init_Network_Nodes_For_New_Transmission(packet.packet_ID_, &frames, packet.packet_buffer_);
 	current_processed_packet_ID_ = packet.packet_ID_;
-	
+	//cur_frames.reserve(frames.size());
+	for(int i=0; i<(int)frames.size();i++){
+	cur_frames.push_back(frames[i]);
+	}
 	std::clock_t start_time = std::clock();
 		
 	while (std::clock() - start_time <= MAX_TIME_TO_SEND_PACKET && !Check_Packet_Transmitted_To_All_Nodes())
@@ -452,17 +476,33 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 {
 	std::string ping_message = "P";
 	std::string ping_frame;
-	
 	ping_message.push_back(packet_ID);
 	ping_message.push_back(device_address_);
 	ping_message.push_back(total_NBR_of_fragments);
 	
 	Generate_Transmit_Request_Frame(ping_message.c_str(), &ping_frame, ping_message.size());
+	cur_ping_frame=ping_frame;
 	serial_device_->Send_Frame(ping_frame);
 	usleep(delay_interframes_);
+	end_packet_count=0;
+	std::cout<<"end of packet ping sent for id : "<<(int)packet_ID<<" my address "<<(int)device_address_<<" total: "<<(int)total_NBR_of_fragments<<" end rebroadcast cnt: "<<end_packet_count <<std::endl;
+	
 }
 
-
+void PacketsHandler::Process_end_packet_pings(){
+	if(end_packet_count != -1){
+		if(end_packet_count < 5){
+			serial_device_->Send_Frame(cur_ping_frame);
+			usleep(delay_interframes_);
+			end_packet_count++;
+		}
+		else{
+			end_packet_count=-1;
+		}
+	std::cout<<" retransmit end of packet number: "<<end_packet_count<<std::endl;
+	}
+	
+}
 //*****************************************************************************
 bool PacketsHandler::Load_Database_Addresses()
 {
@@ -600,7 +640,12 @@ void PacketsHandler::Transmit_Fragments(const std::vector<std::string>& frames)
 	
 	fragments_indexes_to_transmit_.clear();		
 }
-		
+
+void PacketsHandler::check_Fragments_and_rebroadcast(){
+	if(!fragments_indexes_to_transmit_.empty()){
+		Transmit_Fragments(cur_frames);
+	}
+}
 
 //*****************************************************************************
 void PacketsHandler::Adjust_Optimum_MT_Number(const std::clock_t elapsed_time,

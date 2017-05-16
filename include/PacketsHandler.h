@@ -144,6 +144,11 @@ private:
 	std::size_t optimum_MT_NBR_;
 	// TO DO & after auto !?
 	useconds_t delay_interframes_;
+	std::string cur_ping_frame;
+	int end_packet_count;
+	void Process_end_packet_pings();
+	std::vector<std::string> cur_frames;
+	void check_Fragments_and_rebroadcast();
 };
 
 
