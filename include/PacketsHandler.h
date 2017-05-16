@@ -26,7 +26,7 @@
 #include"MultithreadingDeque.hpp"
 #include"SerialDevice.h"
 
-
+#define MAX_BROADCAST_END_PACKET 10
 //*****************************************************************************
 using boost::property_tree::ptree;
 

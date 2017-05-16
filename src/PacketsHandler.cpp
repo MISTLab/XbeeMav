@@ -519,7 +519,7 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 
 void PacketsHandler::Process_end_packet_pings(){
 	if(end_packet_count != -1){
-		if(end_packet_count < 5){
+		if(end_packet_count < MAX_BROADCAST_END_PACKET){
 			Send_End_Of_Packet_Ping(cur_frame.Packet_ID,cur_frame.Packet_size);
 			usleep(500 * 1000);
 			end_packet_count++;
