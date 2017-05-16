@@ -30,7 +30,8 @@ PacketsHandler::PacketsHandler():
 	optimum_MT_NBR_(3),
 	delay_interframes_(100 * 1000),
 	end_packet_count(-1),
-	cur_frame()
+	cur_frame(),
+	packets_assembly_map_()
 {
 }
 
