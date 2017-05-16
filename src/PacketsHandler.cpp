@@ -268,14 +268,21 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				assembly_map_it_->second.packet_buffer_.clear();
 				assembly_map_it_->second.received_fragments_IDs_.clear();
 				assembly_map_it_->second.time_since_creation_ = 0;
+				std::cout<<"[Debug: ] Multi-packet Transferred"<<std::endl;
 				//if(!cur_frame.empty()) cur_frames.clear();
 			}
 			else if(!assembly_map_it_->second.received_fragments_IDs_.empty())
 			{
 				std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.begin();
 				uint8_t j = 0;
-				
-				while (j <= packet_size - 1)
+				for(;it!=assembly_map_it_->second.received_fragments_IDs_.end(); ++it){
+					while(j != *it){
+						Acknowledgement.push_back(j);
+						j++;
+					}
+
+				}
+				/*while (j <= packet_size - 1)
 				{
 					if (j != *it)
 						Acknowledgement.push_back(j);
@@ -283,7 +290,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 						it++;
 
 					j++;
-				}
+				}*/
 			}
 			
 			std::string Ack_frame;
