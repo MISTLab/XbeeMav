@@ -102,7 +102,7 @@ void PacketsHandler::Handle_Mavlink_Message(const mavros_msgs::Mavlink::ConstPtr
 		std::size_t NBR_of_bytes = 0;
 		std::size_t NBR_of_fragments = std::ceil(
 			static_cast<float>(serialized_packet->size()) / XBEE_NETWORK_MTU);
-		std::cout<<"[Debug]sent no of fragments: "<<NBR_of_fragments<<std::endl;
+		//std::cout<<"[Debug]sent no of fragments: "<<NBR_of_fragments<<std::endl;
 		for (uint8_t i = 0; i < NBR_of_fragments; i++)
 		{
 			fragmented_packet->push_back(std::make_shared<std::string>());
@@ -135,7 +135,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 	assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
 	//std::map<uint8_t, Reassembly_Packet_S>::iterator fragment_map_it_ = packets_assembly_map_.begin();
 	//for(;fragment_map_it_!=packets_assembly_map_.end();fragment_map_it_++){
-		std::cout<<"[Debug] fragment id received: "<<(int)fragment_ID<<" from: "<<(int)node_8_bits_address<<" Packet id: "<<(int)packet_ID<<" offset: "<<(int) offset<<std::endl;
+		//std::cout<<"[Debug] fragment id received: "<<(int)fragment_ID<<" from: "<<(int)node_8_bits_address<<" Packet id: "<<(int)packet_ID<<" offset: "<<(int) offset<<std::endl;
 		
 		
 	//}
@@ -221,7 +221,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			{
 				for (uint8_t i = 14; i < frame->size(); i++){
 					fragments_indexes_to_transmit_.insert(frame->at(i));
-					std::cout<<"Index to transmit in ack :"<<(int)frame->at(i)<<" sent by "<<(int)connected_network_nodes_it_->first<<std::endl;
+					//std::cout<<"Index to transmit in ack :"<<(int)frame->at(i)<<" sent by "<<(int)connected_network_nodes_it_->first<<std::endl;
 					if(frame->size()-14 > 0) end_packet_count=0;
 				}
 			}
@@ -232,7 +232,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 	else  if (frame->at(11) == 'P')
 	{
 		assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
-		std::cout<<"assembly_map_it in Pings received"<<(int)assembly_map_it_->first<<std::endl;
+		//std::cout<<"assembly_map_it in Pings received"<<(int)assembly_map_it_->first<<std::endl;
 		/*Send everybody that you read the end ping*/
 		//std::string PING_ACk = "R";
 		//PING_ACk.push_back(packet_ID);
@@ -479,7 +479,7 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 	Init_Network_Nodes_For_New_Transmission(packet.packet_ID_, &frames, packet.packet_buffer_);
 	current_processed_packet_ID_ = packet.packet_ID_;
 	//cur_frames.reserve(frames.size());
-	std::cout<<"Total number of frames: "<< (int)frames.size()<<std::endl;
+	//std::cout<<"Total number of frames: "<< (int)frames.size()<<std::endl;
 	cur_frame.frames.clear();
 	for(auto i=0; i<frames.size();i++){
 	/*Keep in mind have to clear this*/
@@ -516,7 +516,7 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 	serial_device_->Send_Frame(ping_frame);
 	usleep(delay_interframes_);
 	
-	std::cout<<"end of packet ping sent for id : "<<(int)packet_ID<<" my address "<<(int)device_address_<<" total: "<<(int)total_NBR_of_fragments<<" end rebroadcast cnt: "<<end_packet_count <<std::endl;
+	//std::cout<<"end of packet ping sent for id : "<<(int)packet_ID<<" my address "<<(int)device_address_<<" total: "<<(int)total_NBR_of_fragments<<" end rebroadcast cnt: "<<end_packet_count <<std::endl;
 	
 }
 
@@ -530,7 +530,7 @@ void PacketsHandler::Process_end_packet_pings(){
 		else{
 			end_packet_count=-1;
 		}
-	std::cout<<" retransmit end of packet number: "<<end_packet_count<<std::endl;
+	//std::cout<<" retransmit end of packet number: "<<end_packet_count<<std::endl;
 	}
 	
 }
