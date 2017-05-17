@@ -140,7 +140,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 	//}
 	if (assembly_map_it_ != packets_assembly_map_.end() )
 	{
-		if (assembly_map_it_->second.packet_ID_ == packet_ID)
+		if (assembly_map_it_->second.packet_ID_ == packet_ID && old_packet != packet_ID)
 		{
 			std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.find(fragment_ID);
 			
@@ -248,7 +248,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			assembly_map_it_->second.time_since_creation_ = std::clock();
 		}
 		
-		if (assembly_map_it_->second.packet_ID_ == packet_ID )
+		if (assembly_map_it_->second.packet_ID_ == packet_ID)
 		{
 			std::string Acknowledgement = "A";
 			Acknowledgement.push_back(packet_ID);
@@ -272,7 +272,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				std::cout<<"[Debug: ] Multi-packet Transferred"<<std::endl;
 				//if(!cur_frame.empty()) cur_frames.clear();
 			}
-			else if(assembly_map_it_->second.time_since_creation_ !=0)
+			else if(assembly_map_it_->second.time_since_creation_ !=0 &&old_packet !=packet_ID)
 			{
 				std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.begin();
 				uint8_t j = 0;
