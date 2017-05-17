@@ -32,7 +32,8 @@ PacketsHandler::PacketsHandler():
 	end_packet_count(-1),
 	cur_frame(),
 	packets_assembly_map_(),
-	pkt_assembler()
+	pkt_assembler(),
+	old_packet(0)
 {
 }
 
@@ -138,9 +139,9 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		
 		
 	//}
-	if (assembly_map_it_ != packets_assembly_map_.end() )
+	if (assembly_map_it_ != packets_assembly_map_.end() && old_packet != packet_ID)
 	{
-		if (assembly_map_it_->second.packet_ID_ == packet_ID && old_packet != packet_ID)
+		if (assembly_map_it_->second.packet_ID_ == packet_ID )
 		{
 			std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.find(fragment_ID);
 			
@@ -155,7 +156,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 				std::cout<<"inserted fragment: "<<(int)fragment_ID<<" offset: "<<(int)offset<<" fragment size: "<<(int)fragment->size()<<std::endl;
 			}
 		}
-		else if(packet_ID != old_packet)
+		else 
 		{
 			assembly_map_it_->second = {};
 			pkt_assembler.clear();
@@ -268,7 +269,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 				assembly_map_it_->second.packet_buffer_.clear();
 				assembly_map_it_->second.received_fragments_IDs_.clear();
 				assembly_map_it_->second.time_since_creation_ = 0;
-				old_packet=packet_ID;
+				old_packet = packet_ID;
 				std::cout<<"[Debug: ] Multi-packet Transferred"<<std::endl;
 				//if(!cur_frame.empty()) cur_frames.clear();
 			}
