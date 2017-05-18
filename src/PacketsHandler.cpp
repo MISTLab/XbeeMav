@@ -28,7 +28,7 @@ PacketsHandler::PacketsHandler():
 	loaded_SL_(false),
 	loaded_SH_(false),
 	optimum_MT_NBR_(3),
-	delay_interframes_(100 * 1000),
+	delay_interframes_(1000),
 	end_packet_count(-1),
 	cur_frame(),
 	packets_assembly_map_(),
@@ -493,7 +493,7 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 		NBR_of_transmission++;
 		Transmit_Fragments(frames);
 		Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
-		usleep(500 * 1000);
+		usleep(10 * 1000);
 		//Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
 		//usleep(500 * 1000);
 		end_packet_count=0;
@@ -524,7 +524,7 @@ void PacketsHandler::Process_end_packet_pings(){
 	if(end_packet_count != -1){
 		if(end_packet_count < MAX_BROADCAST_END_PACKET){
 			Send_End_Of_Packet_Ping(cur_frame.Packet_ID,cur_frame.Packet_size);
-			usleep(500 * 1000);
+			usleep(10 * 1000);
 			end_packet_count++;
 		}
 		else{
