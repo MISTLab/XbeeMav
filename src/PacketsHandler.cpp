@@ -145,7 +145,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		{
 			std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.find(fragment_ID);
 			
-			if (it == assembly_map_it_->second.received_fragments_IDs_.end() && *it != fragment_ID)
+			if (it == assembly_map_it_->second.received_fragments_IDs_.end())
 			{
 				if (assembly_map_it_->second.received_fragments_IDs_.size() == 0)
 					assembly_map_it_->second.time_since_creation_ = std::clock();
@@ -166,7 +166,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 			//Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 			assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 			assembly_map_it_->second.time_since_creation_ = std::clock();
-			std::cout<<"inserted else "<<std::endl;
+			//std::cout<<"inserted else "<<std::endl;
 		}
 	}
 	else if(packet_ID != old_packet)
@@ -180,7 +180,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		//Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 		assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 		assembly_map_it_->second.time_since_creation_ = std::clock();
-		std::cout<<"iterator else "<<std::endl;	
+		//std::cout<<"iterator else "<<std::endl;	
 	}
 }
 
