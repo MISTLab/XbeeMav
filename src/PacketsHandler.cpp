@@ -159,7 +159,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		else 
 		{
 			assembly_map_it_->second = {};
-			pkt_assembler.clear();
+			//pkt_assembler.clear();
 			assembly_map_it_->second.packet_ID_ = packet_ID;
 			pkt_assembler[fragment_ID]="";
 			pkt_assembler[fragment_ID]+=*fragment;
@@ -173,7 +173,7 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 		Add_New_Node_To_Network(node_8_bits_address);
 		assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
 		assembly_map_it_->second.packet_ID_ = packet_ID;
-		pkt_assembler.clear();
+		
 		pkt_assembler[fragment_ID]="";
 		pkt_assembler[fragment_ID]+=*fragment;
 		//Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
@@ -265,6 +265,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 					Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, pkt_assembler_it->second.c_str(), offset, pkt_assembler_it->second.size());
 					offset+=250;
 				}
+				pkt_assembler.clear();
 				in_packets_->Push_Back(std::make_shared<std::string>(assembly_map_it_->second.packet_buffer_));
 				assembly_map_it_->second.packet_buffer_.clear();
 				assembly_map_it_->second.received_fragments_IDs_.clear();
