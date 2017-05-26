@@ -45,7 +45,7 @@ class PacketsHandler
 public:
 	PacketsHandler();
 	~PacketsHandler();
-	
+
 	bool Init(SerialDevice* serial_device, Thread_Safe_Deque* in_packets);
 	bool Init_Device_ID();
 	void Run();
@@ -58,15 +58,22 @@ public:
 	void Deserialize_Mavlink_Message(const char * bytes,
 			mavros_msgs::Mavlink* mavlink_msg, const std::size_t msg_size);
 	uint8_t get_device_id();
-	
-	
+	void triggerRssiUpdate();
+	float getSignalStrength();
+
+	// RSSI constants
+	const std::string RSSI_COMMAND = "DB";
+	const float RSSI_FILTER_GAIN = 0.5; //filter: old * (1.0-GAIN) + new * GAIN
+
 private:
 	const std::size_t MAX_PACEKT_SIZE; /* MAX packet size in bytes = 63750 bytes */
 	const std::size_t XBEE_NETWORK_MTU; /* Maximum Transmission Unit of Xbee netwrok = 256 bytes (max payload) - 6 bytes (Header size of each fragment) = 250 bytes */
 	const std::size_t FRAGMENT_HEADER_SIZE; /* Header size of each fragment = 6 bytes */
 	const std::clock_t MAX_TIME_TO_SEND_PACKET; /* Maximum time before dropping a packet = 30 seconds*/
 	const unsigned char START_DLIMITER;
-	
+
+
+
 	struct Reassembly_Packet_S
 	{
 		uint8_t packet_ID_;
@@ -74,7 +81,7 @@ private:
 		std::set<uint8_t> received_fragments_IDs_;
 		std::clock_t time_since_creation_; // TO DO use it to delete packets with time out
 	};
-	
+
 	void Insert_Fragment_In_Packet_Buffer(std::string* buffer,
 			const char* fragment, const uint16_t offset, const std::size_t length);
 	void Add_New_Node_To_Network(const uint8_t new_node_address);
@@ -101,7 +108,7 @@ private:
 			const char* message,
 			std::string* frame,
 			const std::size_t message_size,
-			const unsigned char frame_ID = 
+			const unsigned char frame_ID =
 			static_cast<unsigned char>(0x01),
 			const std::string& destination_adssress = "000000000000FFFF",
 			const std::string& short_destination_adress = "FFFF",
@@ -113,16 +120,17 @@ private:
 	void Add_Length_and_Start_Delimiter(std::string* frame);
 	void Generate_AT_Command(const char* command,
 			std::string* frame,
-			const unsigned char frame_ID = 
+			const unsigned char frame_ID =
 			static_cast<unsigned char>(0x01));
-	
-	
+	float filterRSSI(const uint16_t new_rssi) const;
+
+
 	struct On_Line_Node_S
 	{
 		bool received_hole_packet_;
 		std::string address_64_bits_;
 	};
-	
+
 	std::set<uint8_t> fragments_indexes_to_transmit_;
 	SerialDevice* serial_device_;
 	std::atomic<bool> quit_;
@@ -140,6 +148,7 @@ private:
 	std::string device_64_bits_address_;
 	bool loaded_SL_;
 	bool loaded_SH_;
+	float rssi_uint16_;
 	uint8_t current_processed_packet_ID_;
 	std::size_t optimum_MT_NBR_;
 	// TO DO & after auto !?

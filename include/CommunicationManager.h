@@ -57,13 +57,14 @@ private:
 
 	const unsigned char START_DLIMITER;
 	const std::size_t LOOP_RATE;
+	const uint8_t RATE_DIVIDER_RSSI;
 
 	void Run_In_Solo_Mode(DRONE_TYPE drone_type);
 	void Run_In_Swarm_Mode();
 	/*void Generate_Transmit_Request_Frame(
 			const char* const message,
 			std::string* frame,
-			const unsigned char frame_ID = 
+			const unsigned char frame_ID =
 			static_cast<unsigned char>(0x01),
 			const std::string& destination_adssress = "000000000000FFFF",
 			const std::string& short_destination_adress = "FFFF",
@@ -88,6 +89,7 @@ private:
 	void Process_In_Packets();
 	void Process_Command_Responses();
 	bool Get_Param(mavros_msgs::ParamGet::Request& req, mavros_msgs::ParamGet::Response& res);
+	void triggerRssiUpdate();
 
 	Mist::Xbee::SerialDevice serial_device_;
 	Mist::Xbee::PacketsHandler packets_handler_;
@@ -97,7 +99,7 @@ private:
 	Thread_Safe_Deque command_responses_;
 	Thread_Safe_Deque in_packets_;
 	ros::NodeHandle node_handle_;
-	ros::Subscriber mavlink_subscriber_;	
+	ros::Subscriber mavlink_subscriber_;
 	ros::Publisher mavlink_publisher_;
 	ros::ServiceClient mav_dji_client_;
 	ros::ServiceServer mav_dji_server_;

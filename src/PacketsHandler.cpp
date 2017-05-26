@@ -27,6 +27,7 @@ PacketsHandler::PacketsHandler():
 	device_64_bits_address_("12345678"),
 	loaded_SL_(false),
 	loaded_SH_(false),
+	rssi_uint16_(0),
 	optimum_MT_NBR_(3),
 	delay_interframes_(100 * 1000)
 {
@@ -44,13 +45,13 @@ bool PacketsHandler::Init(SerialDevice* serial_device,
 		Thread_Safe_Deque* in_packets)
 {
 	serial_device_ = serial_device;
-	
+
 	if (!Load_Database_Addresses())
 		return false;
-		
+
 	Send_SL_and_SH_Commands();
 	in_packets_ = in_packets;
-	
+
 	return true;
 }
 
@@ -67,9 +68,9 @@ bool PacketsHandler::Init_Device_ID()
 
 //*****************************************************************************
 void PacketsHandler::Run()
-{	
+{
 	quit_.store(false);
-	
+
 	while (!quit_.load())
 	{
 		Process_Out_Standard_Messages();
@@ -83,19 +84,19 @@ void PacketsHandler::Handle_Mavlink_Message(const mavros_msgs::Mavlink::ConstPtr
 {
 	std::shared_ptr<std::string> serialized_packet =
 			std::make_shared<std::string>();
-	
+
 	Serialize_Mavlink_Message(mavlink_msg, serialized_packet);
-	
+
 	if (serialized_packet->size() > XBEE_NETWORK_MTU && serialized_packet->size() <= MAX_PACEKT_SIZE)
 	{
 		std::shared_ptr<std::vector<std::shared_ptr<std::string>>> fragmented_packet =
 		std::make_shared<std::vector<std::shared_ptr<std::string>>>();
-			
+
 		std::size_t offset = 0;
 		std::size_t NBR_of_bytes = 0;
 		std::size_t NBR_of_fragments = std::ceil(
 			static_cast<float>(serialized_packet->size()) / XBEE_NETWORK_MTU);
-		
+
 		for (uint8_t i = 0; i < NBR_of_fragments; i++)
 		{
 			fragmented_packet->push_back(std::make_shared<std::string>());
@@ -104,7 +105,7 @@ void PacketsHandler::Handle_Mavlink_Message(const mavros_msgs::Mavlink::ConstPtr
 			fragmented_packet->at(i)->append(serialized_packet->c_str() + offset, NBR_of_bytes);
 			offset += NBR_of_bytes;
 		}
-		
+
 		out_packets_.Push_Back({mavlink_msg->msgid, fragmented_packet});
 	}
 	else if (serialized_packet->size() < XBEE_NETWORK_MTU)
@@ -124,20 +125,20 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
 	uint16_t offset = static_cast<uint16_t>(
 			static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(4))) << 8 |
 			static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(5))));
-	
+
 	assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
-	
+
 	if (assembly_map_it_ != packets_assembly_map_.end())
 	{
 		if (assembly_map_it_->second.packet_ID_ == packet_ID)
 		{
 			std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.find(fragment_ID);
-			
+
 			if (it == assembly_map_it_->second.received_fragments_IDs_.end())
 			{
 				if (assembly_map_it_->second.received_fragments_IDs_.size() == 0)
 					assembly_map_it_->second.time_since_creation_ = std::clock();
-				
+
 				Insert_Fragment_In_Packet_Buffer(&assembly_map_it_->second.packet_buffer_, fragment->c_str(), offset, fragment->size());
 				assembly_map_it_->second.received_fragments_IDs_.insert(fragment_ID);
 			}
@@ -178,13 +179,13 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 {
 	uint8_t packet_ID = frame->at(12);
 	uint8_t node_8_bits_address = frame->at(13);
-	
+
 	if (frame->at(11) == 'A')
 	{
 		mutex_.lock();
-		
+
 		connected_network_nodes_it_ = connected_network_nodes_.find(node_8_bits_address);
-	
+
 		if (connected_network_nodes_it_ == connected_network_nodes_.end())
 		{
 			mutex_.unlock();
@@ -203,13 +204,13 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 					fragments_indexes_to_transmit_.insert(frame->at(i));
 			}
 		}
-		
+
 		mutex_.unlock();
 	}
 	else  if (frame->at(11) == 'P')
 	{
 		assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
-		
+
 		if (assembly_map_it_ == packets_assembly_map_.end())
 		{
 			Add_New_Node_To_Network(node_8_bits_address);
@@ -217,14 +218,14 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			assembly_map_it_->second.packet_ID_ = packet_ID;
 			assembly_map_it_->second.time_since_creation_ = std::clock();
 		}
-		
+
 		if (assembly_map_it_->second.packet_ID_ == packet_ID)
 		{
 			std::string Acknowledgement = "A";
 			Acknowledgement.push_back(packet_ID);
 			Acknowledgement.push_back(device_address_);
 			uint8_t packet_size = frame->at(14);
-			
+
 			if (assembly_map_it_->second.received_fragments_IDs_.size() == packet_size)
 			{
 				in_packets_->Push_Back(std::make_shared<std::string>(assembly_map_it_->second.packet_buffer_));
@@ -236,7 +237,7 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 			{
 				std::set<uint8_t>::iterator it = assembly_map_it_->second.received_fragments_IDs_.begin();
 				uint8_t j = 0;
-				
+
 				while (j <= packet_size - 1)
 				{
 					if (j != *it)
@@ -247,12 +248,12 @@ void PacketsHandler::Process_Ping_Or_Acknowledgement(std::shared_ptr<std::string
 					j++;
 				}
 			}
-			
+
 			std::string Ack_frame;
 			Generate_Transmit_Request_Frame(Acknowledgement.c_str(), &Ack_frame, Acknowledgement.size());
 			serial_device_->Send_Frame(Ack_frame);
 			usleep(delay_interframes_);
-			
+
 		}
 		else
 		{
@@ -268,7 +269,7 @@ void PacketsHandler::Add_New_Node_To_Network(const uint8_t new_node_address)
 {
 	std::set<uint8_t> empty_set;
 	packets_assembly_map_.insert(std::pair<uint8_t, Reassembly_Packet_S>(new_node_address, {}));
-	
+
 	std::lock_guard<std::mutex> guard(mutex_);
 	connected_network_nodes_.insert(std::pair<uint8_t, bool>(new_node_address, false));
 }
@@ -281,7 +282,7 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 	{
 		uint64_t new_node_address = 0;
 		std::lock_guard<std::mutex> guard(mutex_);
-		
+
 		if (command_response[2] == static_cast<unsigned char>(0))
 		{
 			new_node_address = static_cast<uint64_t>(
@@ -294,20 +295,20 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 			static_cast<unsigned char>(command_response[11]) << 8 |
 			static_cast<unsigned char>(command_response[12]));
 		}
-		
+
 		database_addresses_it_ = database_addresses_.find(new_node_address);
-		
+
 		if (database_addresses_it_ != database_addresses_.end())
 			device_address_ = database_addresses_it_->second;
 		else
-			std::cout << "Remote Node Not in Database" << std::endl; 
+			std::cout << "Remote Node Not in Database" << std::endl;
 	}
 	else if (command_response[0] == 'S' && command_response[1] == 'H')
 	{
 		if (command_response[2] == static_cast<unsigned char>(0))
 		{
 			loaded_SH_ = true;
-			
+
 			for (std::size_t i = 0; i < 4; i++)
 				device_64_bits_address_[i] = command_response[3 + i];
 		}
@@ -317,10 +318,19 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 		if (command_response[2] == static_cast<unsigned char>(0))
 		{
 			loaded_SL_ = true;
-			
+
 			for (std::size_t i = 0; i < 4; i++)
 				device_64_bits_address_[4 + i] = command_response[3 + i];
 		}
+	}
+	else if (command_response[0] == 'D' && command_response[1] == 'B')
+	{
+		 // TODO implemetation of a handler for error value responses (outside valid range)
+		 rssi_uint16_ = filterRSSI(static_cast<uint16_t>(command_response[3]));
+	}
+	else
+	{
+		// nothing to do
 	}
 }
 
@@ -338,14 +348,14 @@ void PacketsHandler::Serialize_Mavlink_Message(const mavros_msgs::Mavlink::Const
 {
 	serialized_packet->push_back(mavlink_msg->sysid);
 	serialized_packet->push_back(mavlink_msg->msgid);
-	
+
 	std::string bytes="12345678";
-	
+
 	for (std::size_t j = 0; j < mavlink_msg->payload64.size(); j++)
 	{
 		for (std::size_t i = 0; i < 8; i++)
 			bytes[7 - i] = (mavlink_msg->payload64.at(j) >> (i * 8));
-			
+
 	 	serialized_packet->append(bytes);
 	}
 }
@@ -354,8 +364,8 @@ void PacketsHandler::Serialize_Mavlink_Message(const mavros_msgs::Mavlink::Const
 //*****************************************************************************
 void PacketsHandler::Insert_Fragment_Header(bool single_fragment,
 		std::shared_ptr<std::string> fragment, const uint8_t packet_ID,
-		const uint8_t fragment_ID, const uint16_t offset) 
-{	
+		const uint8_t fragment_ID, const uint16_t offset)
+{
 	if (!single_fragment)
 	{
 		fragment->push_back('F');
@@ -372,7 +382,7 @@ void PacketsHandler::Insert_Fragment_Header(bool single_fragment,
 
 //*****************************************************************************
 void PacketsHandler::Delete_Packets_With_Time_Out()
-{	
+{
 	for(auto& iterator: packets_assembly_map_)
 	{
 		if (std::clock_t() - iterator.second.time_since_creation_ > MAX_TIME_TO_SEND_PACKET && iterator.second.time_since_creation_ != 0)
@@ -385,17 +395,17 @@ void PacketsHandler::Delete_Packets_With_Time_Out()
 void PacketsHandler::Process_Out_Standard_Messages()
 {
 	std::size_t deque_size = out_std_messages_.Get_Size();
-	
+
 	if (deque_size > 0)
 	{
 		std::string frame;
 		std::shared_ptr<std::string> out_message;
-		
+
 		for (std::size_t i = 0; i < deque_size; i++)
 		{
 			frame.clear();
 			out_message = out_std_messages_.Pop_Front();
-			
+
 			Generate_Transmit_Request_Frame(out_message->c_str(), &frame, out_message->size());
 			serial_device_->Send_Frame(frame);
 			usleep(delay_interframes_);
@@ -408,11 +418,11 @@ void PacketsHandler::Process_Out_Standard_Messages()
 void PacketsHandler::Process_Out_Packets()
 {
 	std::size_t deque_size = out_packets_.Get_Size();
-	
+
 	if (deque_size > 0)
 	{
 		Out_Packet_S out_packet;
-		
+
 		for (std::size_t i = 0; i < deque_size; i++)
 		{
 			Process_Out_Standard_Messages();
@@ -427,14 +437,14 @@ void PacketsHandler::Process_Out_Packets()
 //*****************************************************************************
 void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 {
-	std::size_t NBR_of_transmission = 0; 
+	std::size_t NBR_of_transmission = 0;
 	std::vector<std::string> frames;
-	
+
 	Init_Network_Nodes_For_New_Transmission(packet.packet_ID_, &frames, packet.packet_buffer_);
 	current_processed_packet_ID_ = packet.packet_ID_;
-	
+
 	std::clock_t start_time = std::clock();
-		
+
 	while (std::clock() - start_time <= MAX_TIME_TO_SEND_PACKET && !Check_Packet_Transmitted_To_All_Nodes())
 	{
 		NBR_of_transmission++;
@@ -442,7 +452,7 @@ void PacketsHandler::Send_Packet(const Out_Packet_S& packet)
 		Send_End_Of_Packet_Ping(packet.packet_ID_, packet.packet_buffer_->size());
 		usleep(500 * 1000);
 	}
-	
+
 	Adjust_Optimum_MT_Number(std::clock() - start_time, NBR_of_transmission);
 }
 
@@ -452,11 +462,11 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 {
 	std::string ping_message = "P";
 	std::string ping_frame;
-	
+
 	ping_message.push_back(packet_ID);
 	ping_message.push_back(device_address_);
 	ping_message.push_back(total_NBR_of_fragments);
-	
+
 	Generate_Transmit_Request_Frame(ping_message.c_str(), &ping_frame, ping_message.size());
 	serial_device_->Send_Frame(ping_frame);
 	usleep(delay_interframes_);
@@ -466,45 +476,45 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 //*****************************************************************************
 bool PacketsHandler::Load_Database_Addresses()
 {
-	const std::string FILE_PATH = "/home/ubuntu/ROS_WS/src/xbeemav/Resources/database.xml";
-	
-	
+	const std::string FILE_PATH = "/home/hs/Works/xbee_ws/src/XbeeMav/Resources/database.xml";
+
+
 	if (!boost::filesystem::exists(FILE_PATH))
-	{	
+	{
 		std::cout << "database.xml Not Found." << std::endl;
 		return false;
 	}
-	
+
 	ptree pt;
 	boost::property_tree::read_xml(FILE_PATH, pt);
 	std::string short_address;
 	std::string address_64_bits;
 	unsigned int short_address_int;
 	uint64_t address_64_bits_int;
-	
+
 	BOOST_FOREACH(ptree::value_type const&v, pt.get_child("Addresses"))
 	{
 		if (v.first == "Device")
 		{
 			short_address = v.second.get<std::string>("<xmlattr>.Address");
 			address_64_bits = v.second.data();
-			
+
 			if (sscanf(short_address.c_str(), "%3u", &short_address_int) < 0)
 			{
 				std::cout << "Short Address Error. Please Check database.xml For Possible Errors." << std::endl;
 				return false;
 			}
-			
+
 			if (sscanf(address_64_bits.c_str(), "%" SCNx64, &address_64_bits_int) < 0)
 			{
 				std::cout << "64 bits Address Error. Please Check database.xml For Possible Errors." << std::endl;
 				return false;
 			}
-			
+
 			database_addresses_.insert(std::pair<uint64_t, uint8_t>(address_64_bits_int, static_cast<uint8_t>(short_address_int)));
 		}
 	}
-	
+
 	return true;
 }
 
@@ -514,7 +524,7 @@ bool PacketsHandler::Get_Local_Address()
 {
 	const useconds_t ONE_SECOND = 1*1000*1000; /* 1s = 1 * 10⁶ microseconds. */
 	usleep(ONE_SECOND);
-	
+
 	if (loaded_SH_ && loaded_SL_)
 	{
 		uint64_t local_64_bits_address = (
@@ -526,9 +536,9 @@ bool PacketsHandler::Get_Local_Address()
 		static_cast<uint64_t>(static_cast<unsigned char>(device_64_bits_address_[5])) << 16 |
 		static_cast<uint64_t>(static_cast<unsigned char>(device_64_bits_address_[6])) << 8 |
 		static_cast<uint64_t>(static_cast<unsigned char>(device_64_bits_address_[7])));
-		
+
 		database_addresses_it_ = database_addresses_.find(local_64_bits_address);
-		
+
 		if (database_addresses_it_ != database_addresses_.end())
 		{
 			device_address_ = database_addresses_it_->second;
@@ -545,7 +555,7 @@ bool PacketsHandler::Get_Local_Address()
 	{
 		Send_SL_and_SH_Commands();
 		return false;
-	}	
+	}
 }
 
 
@@ -553,16 +563,16 @@ bool PacketsHandler::Get_Local_Address()
 bool PacketsHandler::Check_Packet_Transmitted_To_All_Nodes()
 {
 	std::lock_guard<std::mutex> guard(mutex_);
-	
+
 	if (connected_network_nodes_.size() == 0)
 		return false;
-	
+
 	for (auto it : connected_network_nodes_)
 	{
 		if (!it.second)
 			return false;
 	}
-	
+
 	return true;
 }
 
@@ -572,12 +582,12 @@ void PacketsHandler::Init_Network_Nodes_For_New_Transmission(const uint8_t packe
 {
 	std::lock_guard<std::mutex> guard(mutex_);
 	fragments_indexes_to_transmit_.clear();
-	
+
 	for (auto& it : connected_network_nodes_)
 		it.second = false;
-	
+
 	current_processed_packet_ID_ = packet_ID;
-	
+
 	for (uint8_t i = 0; i < packet->size(); i++)
 	{
 		frames->push_back("");
@@ -591,21 +601,21 @@ void PacketsHandler::Init_Network_Nodes_For_New_Transmission(const uint8_t packe
 void PacketsHandler::Transmit_Fragments(const std::vector<std::string>& frames)
 {
 	std::lock_guard<std::mutex> guard(mutex_);
-	
+
 	for (auto index: fragments_indexes_to_transmit_)
 	{
 		serial_device_->Send_Frame(frames.at(index));
 		usleep(delay_interframes_);
 	}
-	
-	fragments_indexes_to_transmit_.clear();		
+
+	fragments_indexes_to_transmit_.clear();
 }
-		
+
 
 //*****************************************************************************
 void PacketsHandler::Adjust_Optimum_MT_Number(const std::clock_t elapsed_time,
 		const std::size_t NBR_of_transmission)
-{	
+{
 	if (NBR_of_transmission > 1 && elapsed_time < MAX_TIME_TO_SEND_PACKET)
 		delay_interframes_ += 5000;
 	else if (NBR_of_transmission == 1 && delay_interframes_ >= 5000)
@@ -618,11 +628,11 @@ void PacketsHandler::Send_SL_and_SH_Commands()
 {
 	std::string command;
 	std::string frame;
-	
+
 	command = "SL";
 	Generate_AT_Command(command.c_str(), &frame);
 	serial_device_->Send_Frame(frame);
-	
+
 	command = "SH";
 	frame = "";
 	Generate_AT_Command(command.c_str(), &frame);
@@ -637,7 +647,7 @@ void PacketsHandler::Deserialize_Mavlink_Message(const char * bytes,
 	mavlink_msg->sysid = bytes[0];
 	mavlink_msg->msgid = bytes[1];
 	uint64_t current_int64 = 0;
-	
+
 	for (std::size_t i = 2; i < msg_size; i += 8)
 	{
 		current_int64 = (
@@ -649,7 +659,7 @@ void PacketsHandler::Deserialize_Mavlink_Message(const char * bytes,
 		static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 5])) << 16 |
 		static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 6])) << 8 |
 		static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 7])));
-		
+
 		mavlink_msg->payload64.push_back(current_int64);
 	}
 }
@@ -701,7 +711,7 @@ inline void PacketsHandler::Add_Length_and_Start_Delimiter(
 
 	header.push_back(START_DLIMITER);
 	sprintf(temporary_buffer, "%04X", frame_length);
-	sscanf(temporary_buffer, "%02X%02X", &Hex_frame_length_1, 
+	sscanf(temporary_buffer, "%02X%02X", &Hex_frame_length_1,
 			&Hex_frame_length_2);
 	temporary_char = static_cast<unsigned char>(Hex_frame_length_1);
 	header.push_back(temporary_char);
@@ -761,13 +771,31 @@ void PacketsHandler::Generate_AT_Command(const char* command,
 	frame->push_back(FAME_TYPE);
 	frame->push_back(frame_ID);
 	frame->append(command);
-	
+
 	Calculate_and_Append_Checksum(frame);
 	Add_Length_and_Start_Delimiter(frame);
 }
 
 uint8_t PacketsHandler::get_device_id(){
 return device_address_;
+}
+
+void PacketsHandler::triggerRssiUpdate()
+{
+	std::string frame;
+	Generate_AT_Command(RSSI_COMMAND.c_str(), &frame);
+	serial_device_->Send_Frame(frame);
+}
+
+float PacketsHandler::getSignalStrength()
+{
+	return rssi_uint16_;
+}
+
+float PacketsHandler::filterRSSI(const uint16_t new_rssi) const
+{
+	return static_cast<float>(rssi_uint16_ * (1.0 - RSSI_FILTER_GAIN) +
+                               new_rssi * RSSI_FILTER_GAIN);
 }
 
 }
