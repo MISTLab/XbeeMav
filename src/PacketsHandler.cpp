@@ -106,7 +106,8 @@ void PacketsHandler::Handle_Mavlink_Message(const mavros_msgs::Mavlink::ConstPtr
 			offset += NBR_of_bytes;
 		}
 
-		out_packets_.Push_Back({mavlink_msg->msgid, fragmented_packet});
+		out_packets_.Push_Back({static_cast<uint8_t>(mavlink_msg->msgid & 0xFF),
+			                      fragmented_packet});
 	}
 	else if (serialized_packet->size() < XBEE_NETWORK_MTU)
 	{
@@ -286,10 +287,10 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 		if (command_response[2] == static_cast<unsigned char>(0))
 		{
 			new_node_address = static_cast<uint64_t>(
-			static_cast<unsigned char>(command_response[5]) << 56 |
-			static_cast<unsigned char>(command_response[6]) << 48 |
-			static_cast<unsigned char>(command_response[7]) << 40 |
-			static_cast<unsigned char>(command_response[8]) << 32 |
+			static_cast<uint64_t>(command_response[5]) << 56 |
+			static_cast<uint64_t>(command_response[6]) << 48 |
+			static_cast<uint64_t>(command_response[7]) << 40 |
+			static_cast<uint64_t>(command_response[8]) << 32 |
 			static_cast<unsigned char>(command_response[9]) << 24 |
 			static_cast<unsigned char>(command_response[10]) << 16 |
 			static_cast<unsigned char>(command_response[11]) << 8 |
@@ -476,12 +477,13 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 //*****************************************************************************
 bool PacketsHandler::Load_Database_Addresses()
 {
-	const std::string FILE_PATH = "/home/hs/Works/xbee_ws/src/XbeeMav/Resources/database.xml";
+	const std::string FILE_PATH = DATABASE_PATH;
 
 
 	if (!boost::filesystem::exists(FILE_PATH))
 	{
-		std::cout << "database.xml Not Found." << std::endl;
+		std::cout << "database.xml Not Found with path: "
+		          << FILE_PATH << std::endl;
 		return false;
 	}
 

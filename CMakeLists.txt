@@ -46,6 +46,11 @@ catkin_package(
 ## Build ##
 ###########
 
+## Add definitions
+add_definitions(
+  -DDATABASE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/Resources/database.xml"
+  -DXBEE_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/Resources/XBee_Config.xml"
+)
 
 ## Specify additional locations of header files
 include_directories(
@@ -64,7 +69,6 @@ target_link_libraries(xbee_config ${catkin_LIBRARIES})
 #add_executable(test_controller src/TestController.cpp)
 #target_link_libraries(test_controller ${catkin_LIBRARIES})
 
-
 add_executable(test_buzz src/TestBuzz.cpp)
 target_link_libraries(test_buzz ${catkin_LIBRARIES})
 
@@ -77,4 +81,3 @@ target_link_libraries(test_buzz ${catkin_LIBRARIES})
 #############
 ## Testing ##
 #############
-
