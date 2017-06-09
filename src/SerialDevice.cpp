@@ -34,7 +34,7 @@ bool SerialDevice::Init(
 		const std::string & device, const std::size_t baud_rate)
 {
 	serial_port_.open(device);
-	
+
 	if (serial_port_.is_open())
 	{
 		Set_Port_Options(baud_rate);
@@ -71,7 +71,7 @@ void SerialDevice::Send_Frame(const std::string& frame)
 	{
 		bool write_in_progress = !out_messages_.empty();
 		out_messages_.push_back(frame);
-		
+
 		if (!write_in_progress)
 			Write_Frame();
 	});
@@ -104,12 +104,14 @@ void SerialDevice::Close_Serial_Port()
 void SerialDevice::Set_In_Messages_Pointers(Thread_Safe_Deque* in_std_messages,
 			Thread_Safe_Deque* in_fragments,
 			Thread_Safe_Deque* in_Acks_and_Pings,
-			Thread_Safe_Deque* command_responses)
+			Thread_Safe_Deque* command_responses,
+		  Thread_Safe_Deque* in_packet_loss)
 {
 	in_std_messages_ = in_std_messages;
 	in_fragments_ = in_fragments;
 	in_Acks_and_Pings_ = in_Acks_and_Pings;
 	command_responses_ = command_responses;
+	in_packet_loss_ = in_packet_loss;
 }
 
 
@@ -145,9 +147,9 @@ void SerialDevice::Read_Frame_Header()
 	{
 		if (!error)
 		{
-			int start_delimiter_position = 
+			int start_delimiter_position =
 				current_frame_.Get_Start_Delimiter_Position();
-			
+
 			if (start_delimiter_position >= 0)
 			{
 				if (0 == start_delimiter_position)
@@ -194,44 +196,56 @@ void SerialDevice::Read_Frame_Body()
 	{
 		if (!error)
 		{
-			if (current_frame_.Get_Frame_Type() == 
+			if (current_frame_.Get_Frame_Type() ==
 					FRAME_TYPE_KEYS[RECEIVE_PACKET])
 			{
 				char msg_type = current_frame_.Get_Message_Type();
 				std::shared_ptr<std::string> in_message =
 					std::make_shared<std::string>();
-				
-				if (msg_type == 'F')
+
+				if (msg_type == FRAGMENT_MSG_ID)
 				{
 					in_message->append(current_frame_.Get_Frame_Body()
 					+ 11,
 					current_frame_.Get_Frame_Body_Length() - 12);
 					in_fragments_->Push_Back(in_message);
 				}
-					
-				else if (msg_type == 'A' || msg_type == 'P')
+
+				else if (msg_type == ACKNOWLEDGEMENT_MSG_ID || msg_type == PING_MSG_ID)
 				{
 					in_message->append(current_frame_.Get_Frame_Body(),
 					current_frame_.Get_Frame_Body_Length() - 1);
 					in_Acks_and_Pings_->Push_Back(in_message);
 				}
-					
-				else if (msg_type == 'S')
+
+				else if (msg_type == STANDARD_MSG_ID)
 				{
 					in_message->append(current_frame_.Get_Frame_Body() + 12,
 					current_frame_.Get_Frame_Body_Length() - 13);
 					in_std_messages_->Push_Back(in_message);
 				}
+
+				else if (msg_type == PACKET_LOSS_MSG_ID)
+				{
+					in_message->append(current_frame_.Get_Frame_Body() + 11,
+					current_frame_.Get_Frame_Body_Length() - 12);
+					in_packet_loss_->Push_Back(in_message);
+				}
+
+				else
+				{
+					// nothing to do
+				}
 			}
-			else if (current_frame_.Get_Frame_Type() == 
+			else if (current_frame_.Get_Frame_Type() ==
 					FRAME_TYPE_KEYS[AT_COMMAND_RESPONSE])
-			{	
+			{
 				std::shared_ptr<std::string> in_message =
 					std::make_shared<std::string>();
-				
+
 				in_message->append(current_frame_.Get_Frame_Body() + 1,
 					current_frame_.Get_Frame_Body_Length() - 2);
-				
+
 				command_responses_->Push_Back(in_message);
 			}
 

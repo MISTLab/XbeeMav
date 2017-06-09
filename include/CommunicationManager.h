@@ -57,7 +57,8 @@ private:
 
 	const unsigned char START_DLIMITER;
 	const std::size_t LOOP_RATE;
-	const uint8_t RATE_DIVIDER_RSSI;
+	const uint8_t DEFAULT_RATE_DIVIDER_RSSI;
+	const uint8_t DEFAULT_RATE_DIVIDER_PACKET_LOSS;
 
 	void Run_In_Solo_Mode(DRONE_TYPE drone_type);
 	void Run_In_Swarm_Mode();
@@ -88,8 +89,12 @@ private:
 	void Process_In_Fragments();
 	void Process_In_Packets();
 	void Process_Command_Responses();
+	void Process_Packet_Loss();
 	bool Get_Param(mavros_msgs::ParamGet::Request& req, mavros_msgs::ParamGet::Response& res);
+	bool getRosParams();
 	void triggerRssiUpdate();
+	std::string safeSubStr(const std::string strg,
+		                     const unsigned int index_max) const;
 
 	Mist::Xbee::SerialDevice serial_device_;
 	Mist::Xbee::PacketsHandler packets_handler_;
@@ -98,6 +103,7 @@ private:
 	Thread_Safe_Deque in_Acks_and_Pings_;
 	Thread_Safe_Deque command_responses_;
 	Thread_Safe_Deque in_packets_;
+	Thread_Safe_Deque in_packet_loss_;
 	ros::NodeHandle node_handle_;
 	ros::Subscriber mavlink_subscriber_;
 	ros::Publisher mavlink_publisher_;
@@ -106,6 +112,9 @@ private:
 	ros::ServiceServer StatusSrv_;
 	std_msgs::UInt8 device_id_out;
 	std::shared_ptr<std::thread> service_thread_; // TO DO delete !?
+	std::uint16_t packet_loss_timer_;
+	uint8_t rate_divider_rssi_;
+	uint8_t rate_divider_packet_loss_;
 };
 
 
