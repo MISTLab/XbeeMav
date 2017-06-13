@@ -58,19 +58,21 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(xbee_setup
-  src/XBeeSetup.cpp
-  src/XBeeModule.cpp
-  src/XMLConfigParser.cpp
-)
+#add_library(xbee_setup
+#  src/XBeeSetup.cpp
+#  src/XBeeModule.cpp
+#  src/XMLConfigParser.cpp
+#)
 
 
 
-add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler)
-target_link_libraries(xbee_mav xbee_setup ${catkin_LIBRARIES})
+add_executable(xbee_mav src/XBeeSetup.cpp src/XBeeModule.cpp src/XMLConfigParser.cpp src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler)
+target_link_libraries(xbee_mav ${catkin_LIBRARIES})
+#target_link_libraries(xbee_mav xbee_setup ${catkin_LIBRARIES})
 
-add_executable(xbee_config src/main.cpp)
-target_link_libraries(xbee_config xbee_setup ${catkin_LIBRARIES})
+add_executable(xbee_config src/XBeeSetup.cpp src/XBeeModule.cpp src/XMLConfigParser.cpp src/main.cpp)
+target_link_libraries(xbee_config ${catkin_LIBRARIES})
+#target_link_libraries(xbee_config xbee_setup ${catkin_LIBRARIES})
 
 #add_executable(test_controller src/TestController.cpp)
 #target_link_libraries(test_controller ${catkin_LIBRARIES})
