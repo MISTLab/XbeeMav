@@ -9,7 +9,7 @@
 
 #include "XBeeSetup.h"
 
-void setupXBee(const std::string &device_port, const unsigned int baud_rate) {
+bool setupXBee(const std::string &device_port, const unsigned int baud_rate) {
   XBeeModule xbee_module;
   XMLConfigParser config_parser;
 
@@ -47,15 +47,24 @@ void setupXBee(const std::string &device_port, const unsigned int baud_rate) {
 
     std::cout << "Exiting AT Command Mode..." << std::endl;
 
-    if (xbee_module.Is_Connected()) {
+    if (xbee_module.Is_Connected())
+    {
       xbee_module.Exit_AT_Command_Mode();
 
       if (config_parser.Is_Config_Loaded_Successfully())
+      {
         std::cout << "XBee Configured Successfully." << std::endl;
+        return true;
+      }
       else
+      {
         std::cout << "XBee Configuration Failed." << std::endl;
-    } else {
+      }
+    }
+    else
+    {
       std::cout << "XBee Configuration Failed." << std::endl;
     }
   }
+  return false;
 }

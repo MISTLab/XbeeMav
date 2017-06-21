@@ -53,20 +53,20 @@ add_definitions(
 
 ## Specify additional locations of header files
 include_directories(
-include
-${xbee_ros_node_INCLUDE_DIRS}
-${catkin_INCLUDE_DIRS}
-${Boost_INCLUDE_DIRS}
-${BOOST_INCLUDEDIR}
+  include
+  ${xbee_ros_node_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${BOOST_INCLUDEDIR}
 )
 
 add_library(xbee_setup
-src/XBeeSetup.cpp
-src/XBeeModule.cpp
-src/XMLConfigParser.cpp
+  src/XBeeSetup.cpp
+  src/XBeeModule.cpp
+  src/XMLConfigParser.cpp
 )
 
-add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler)
+add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler src/frame_generators.cpp)
 target_link_libraries(xbee_mav xbee_setup ${catkin_LIBRARIES})
 
 add_executable(xbee_config src/XMLConfigParser.cpp src/main.cpp)

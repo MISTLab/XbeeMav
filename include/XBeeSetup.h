@@ -11,4 +11,4 @@
 #include"XBeeModule.h"
 #include"XMLConfigParser.h"
 
-void setupXBee(const std::string& device_port, const unsigned int baud_rate);
+bool setupXBee(const std::string& device_port, const unsigned int baud_rate);

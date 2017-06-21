@@ -28,7 +28,6 @@ PacketsHandler::PacketsHandler():
   XBEE_NETWORK_MTU(250),
   FRAGMENT_HEADER_SIZE(6),
   MAX_TIME_TO_SEND_PACKET(30000), // TO DO change it to packet time out
-  START_DLIMITER(static_cast<unsigned char>(0x7E)),
   RSSI_COMMAND("DB"),
   RSSI_FILTER_GAIN(0.5),
   PACKET_LOSS_IDENTIFIER("L"),
@@ -347,6 +346,36 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
                               rssi_float_,
                               RSSI_FILTER_GAIN);
   }
+  else if (command_response[0] == 'R' && command_response[1] == 'S')
+  {
+    uint64_t new_node_address = static_cast<uint64_t>(
+                                    static_cast<uint64_t>(command_response[2]) << 56 |
+                                    static_cast<uint64_t>(command_response[3]) << 48 |
+                                    static_cast<uint64_t>(command_response[4]) << 40 |
+                                    static_cast<uint64_t>(command_response[5]) << 32 |
+                                    static_cast<unsigned char>(command_response[6]) << 24 |
+                                    static_cast<unsigned char>(command_response[7]) << 16 |
+                                    static_cast<unsigned char>(command_response[8]) << 8 |
+                                    static_cast<unsigned char>(command_response[9]));
+
+    database_addresses_it_ = database_addresses_.find(new_node_address);
+
+    if (database_addresses_it_ != database_addresses_.end())
+    {
+       RSSI_Result result ={ucharToUint16(command_response[10], command_response[11]),
+                            ucharToUint16(command_response[12], command_response[13]),
+                            ucharToUint16(command_response[14], command_response[15]),
+                            ucharToUint16(command_response[16], command_response[17]),
+                            static_cast<uint8_t>(command_response[18]),
+                            static_cast<uint8_t>(command_response[19]),
+                            static_cast<uint8_t>(command_response[20]),
+                            static_cast<uint8_t>(command_response[21]),
+                            static_cast<uint8_t>(command_response[22])
+                          };
+       rssi_result_map_[database_addresses_it_->second] = result;
+    }
+
+  }
   else
   {
     // nothing to do
@@ -545,6 +574,7 @@ bool PacketsHandler::Load_Database_Addresses()
       }
 
       database_addresses_.insert(std::pair<uint64_t, uint8_t>(address_64_bits_int, static_cast<uint8_t>(short_address_int)));
+      database_addresses_inv_.insert(std::pair<uint8_t, uint64_t>(static_cast<uint8_t>(short_address_int), address_64_bits_int));
     }
   }
 
@@ -712,122 +742,14 @@ void PacketsHandler::Deserialize_Mavlink_Message(const char * bytes,
   }
   else
   {
-    uint64_t long_address = find64BitsAddress(mavlink_msg->sysid);
-    packet_loss_map.insert(std::pair<uint8_t, On_Line_Node_S>(mavlink_msg->sysid,
-                                                     {long_address, 0.0, 0.0, 0, 0, 0, 0}));
+    database_addresses_inv_it_ = database_addresses_inv_.find(mavlink_msg->sysid);
+    if (database_addresses_inv_it_ != database_addresses_inv_.end())
+    {
+      uint64_t long_address = database_addresses_inv_it_->second;
+      packet_loss_map.insert(std::pair<uint8_t, On_Line_Node_S>(mavlink_msg->sysid,
+                                                                {long_address, 0.0, 0.0, 0, 0, 0, 0}));
+    }
   }
-}
-
-
-//*****************************************************************************
-inline void PacketsHandler::Generate_Transmit_Request_Frame(
-    const char* message,
-    std::string * frame,
-    const std::size_t message_size,
-    const unsigned char frame_ID,
-    const std::string& destination_adssress,
-    const std::string& short_destination_adress,
-    const std::string& broadcast_radius,
-    const std::string& options)
-{
-  const unsigned char FAME_TYPE = static_cast<unsigned char>(0x10); /* Transmit Request Frame */
-  std::string frame_parameters;
-  std::string bytes_frame_parameters;
-
-  frame_parameters.append(destination_adssress);
-  frame_parameters.append(short_destination_adress);
-  frame_parameters.append(broadcast_radius);
-  frame_parameters.append(options);
-
-  Convert_HEX_To_Bytes(frame_parameters, &bytes_frame_parameters);
-
-  frame->push_back(FAME_TYPE);
-  frame->push_back(frame_ID);
-  frame->append(bytes_frame_parameters);
-  frame->append(message, message_size);
-
-  Calculate_and_Append_Checksum(frame);
-  Add_Length_and_Start_Delimiter(frame);
-}
-
-
-//*****************************************************************************
-inline void PacketsHandler::Add_Length_and_Start_Delimiter(
-    std::string* frame)
-{
-  const unsigned short FIVE_BYTES = 5;
-  char temporary_buffer[FIVE_BYTES];
-  unsigned char temporary_char;
-  int Hex_frame_length_1;
-  int Hex_frame_length_2;
-  std::string header;
-  int frame_length = frame->size() - 1; /* frame_length = frame_size - checksum byte */
-
-  header.push_back(START_DLIMITER);
-  sprintf(temporary_buffer, "%04X", frame_length);
-  sscanf(temporary_buffer, "%02X%02X", &Hex_frame_length_1,
-      &Hex_frame_length_2);
-  temporary_char = static_cast<unsigned char>(Hex_frame_length_1);
-  header.push_back(temporary_char);
-  temporary_char = static_cast<unsigned char>(Hex_frame_length_2);
-  header.push_back(temporary_char);
-  frame->insert(0, header);
-}
-
-
-//*****************************************************************************
-inline void PacketsHandler::Calculate_and_Append_Checksum(
-    std::string* frame)
-{
-  unsigned short bytes_sum = 0;
-  unsigned lowest_8_bits = 0;
-  unsigned short checksum = 0;
-  unsigned char checksum_byte;
-
-  for (unsigned short i = 0; i < frame->size(); i++)
-    bytes_sum += static_cast<unsigned short>(frame->at(i));
-
-  lowest_8_bits = bytes_sum & 0xFF;
-  checksum = 0xFF - lowest_8_bits;
-  checksum_byte = static_cast<unsigned char>(checksum);
-  frame->push_back(checksum_byte);
-}
-
-
-//*****************************************************************************
-inline void PacketsHandler::Convert_HEX_To_Bytes(
-    const std::string& HEX_data, std::string* converted_data)
-{
-  const unsigned short TWO_BYTES = 2;
-  char temporary_buffer[TWO_BYTES];
-  unsigned char temporary_char;
-  int temporary_HEX;
-
-  for (unsigned short i = 0; i <= HEX_data.size() - TWO_BYTES;
-      i += TWO_BYTES)
-  {
-    memcpy(temporary_buffer, HEX_data.c_str() + i, TWO_BYTES);
-    sscanf(temporary_buffer, "%02X", &temporary_HEX);
-    temporary_char = static_cast<unsigned char>(temporary_HEX);
-    converted_data->push_back(temporary_char);
-  }
-}
-
-
-//*****************************************************************************
-void PacketsHandler::Generate_AT_Command(const char* command,
-      std::string* frame,
-      const unsigned char frame_ID)
-{
-  const unsigned char FAME_TYPE = static_cast<unsigned char>(0x09);/* AT Command Frame */
-  std::string temporary_parameter_value;
-
-  frame->push_back(FAME_TYPE);
-  frame->push_back(frame_ID);
-  frame->append(command);
-
-  Calculate_and_Append_Checksum(frame);
-  Add_Length_and_Start_Delimiter(frame);
 }
 
 //*****************************************************************************
@@ -877,6 +799,45 @@ void PacketsHandler::triggerRssiUpdate()
 }
 
 //*****************************************************************************
+uint8_t PacketsHandler::triggerAPIRssiUpdate(uint16_t rssi_payload_size,
+                                          uint16_t rssi_iterations,
+                                          uint8_t target_id)
+{
+  static const uint8_t ALL_IDS = 0xFF;
+  uint8_t sent_request = 0;
+
+  if(target_id == ALL_IDS)
+  {
+    for (const auto& it:connected_network_nodes_)
+    {
+      std::string frame;
+      generateLinkTestingFrame(&frame, rssi_payload_size,
+                               rssi_iterations,
+                               device_64_bits_address_,
+                               database_addresses_inv_[it.first]);
+      serial_device_->Send_Frame(frame);
+      sent_request++;
+    }
+  }
+  else
+  {
+    connected_network_nodes_it_ = connected_network_nodes_.find(target_id);
+    if(connected_network_nodes_it_ != connected_network_nodes_.end())
+    {
+      std::string frame;
+      generateLinkTestingFrame(&frame, rssi_payload_size,
+                               rssi_iterations,
+                               device_64_bits_address_,
+                               database_addresses_inv_[connected_network_nodes_it_->first]);
+      serial_device_->Send_Frame(frame);
+      sent_request++;
+    }
+  }
+
+  return sent_request;
+}
+
+//*****************************************************************************
 float PacketsHandler::computePercentage(const int16_t numerator, const int16_t denumerator) const
 {
   return static_cast<float>((numerator * 100.0) / (denumerator * 1.0));
@@ -886,16 +847,6 @@ float PacketsHandler::computePercentage(const int16_t numerator, const int16_t d
 float PacketsHandler::filterIIR(const float new_val, const float old_val, const float gain) const
 {
   return (new_val * (1.0 - gain)) + (old_val * gain);
-}
-
-//*****************************************************************************
-int64_t PacketsHandler::find64BitsAddress(const uint8_t node_id)
-{
-  for (auto& it:database_addresses_)
-  {
-    if (it.second == node_id){return it.first;}
-  }
-  return 0;
 }
 
 //*****************************************************************************
@@ -925,9 +876,13 @@ void PacketsHandler::processPacketLoss(const char* packet_loss)
   }
   else
   {
-    uint64_t long_address = find64BitsAddress(source_ID);
-    packet_loss_map.insert(std::pair<uint8_t, On_Line_Node_S>(source_ID,
-                                                              {long_address, 0.0, 0.0, 0, 0, 0, 0}));
+    database_addresses_inv_it_ = database_addresses_inv_.find(source_ID);
+    if (database_addresses_inv_it_ != database_addresses_inv_.end())
+    {
+      uint64_t long_address = database_addresses_inv_it_->second;
+      packet_loss_map.insert(std::pair<uint8_t, On_Line_Node_S>(source_ID,
+                                                                {long_address, 0.0, 0.0, 0, 0, 0, 0}));
+    }
   }
 }
 
@@ -1003,8 +958,15 @@ void PacketsHandler::sendPacketLoss()
     serial_device_->Send_Frame(packet_loss_frame);
 
   }
-
 }
+
+uint16_t PacketsHandler::ucharToUint16(unsigned char msb, unsigned char lsb)
+/* Description: return the numerical value of the corresponding
+ *   binary number msb lsb
+ ------------------------------------------------------------------ */
+ {
+   return (static_cast<uint16_t>(msb)<<8) + static_cast<uint16_t>(lsb);
+ }
 
 }
 
