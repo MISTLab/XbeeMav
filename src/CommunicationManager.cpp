@@ -328,6 +328,10 @@ bool CommunicationManager::Get_Param (mavros_msgs::ParamGet::Request& req,
   {
     val.integer=packets_handler_.getDeviceId();
   }
+  if(req.param_id == "deque_full")
+  {
+    val.integer=packets_handler_.getDequeFull();
+  }
   /////////////////////////////////////////////////////////
   // RSSI Section
   else if(req.param_id == "rssi")

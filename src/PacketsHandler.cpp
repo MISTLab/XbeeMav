@@ -29,6 +29,7 @@ namespace Xbee
 
 const uint8_t PacketsHandler::ALL_IDS = 0xFF;
 const uint16_t PacketsHandler::PACKET_LOSS_UNAVAILABLE = 0xFFFF;
+const uint8_t PacketsHandler::MAX_WAITING_OUT_MSG = 10;
 
 //*****************************************************************************
 PacketsHandler::PacketsHandler():
@@ -462,7 +463,8 @@ void PacketsHandler::Process_Out_Standard_Messages()
   {
     std::string frame;
     std::shared_ptr<std::string> out_message;
-    if(deque_size>10){printf("deque full");}
+    if(deque_size > MAX_WAITING_OUT_MSG){deque_full_ = true;}
+    else{deque_full_ = false;}
 
 
     for (std::size_t i = 0; i < deque_size; i++)
@@ -761,6 +763,12 @@ void PacketsHandler::Deserialize_Mavlink_Message(const char * bytes,
 //*****************************************************************************
 uint8_t PacketsHandler::getDeviceId(){
   return device_address_;
+}
+
+//*****************************************************************************
+uint8_t PacketsHandler::getDequeFull(){
+  if(deque_full_) {return 1;}
+  else {return 0;}
 }
 
 //*****************************************************************************

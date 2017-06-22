@@ -98,6 +98,7 @@ namespace Xbee
       void Deserialize_Mavlink_Message(const char * bytes,
                                        mavros_msgs::Mavlink* mavlink_msg, const std::size_t msg_size);
       uint8_t getDeviceId();
+      uint8_t getDequeFull();
       float getSignalStrength();
       float getAPISignalStrength(uint8_t short_node_id);
       float getRawPacketLoss(uint8_t short_node_id);
@@ -113,6 +114,7 @@ namespace Xbee
 
       static const uint16_t PACKET_LOSS_UNAVAILABLE;
       static const uint8_t ALL_IDS;
+      static const uint8_t MAX_WAITING_OUT_MSG;
 
     private:
       const std::size_t MAX_PACEKT_SIZE;   /* MAX packet size in bytes = 63750 bytes */
@@ -184,6 +186,7 @@ namespace Xbee
       std::string device_64_bits_address_;
       bool loaded_SL_;
       bool loaded_SH_;
+      bool deque_full_;
       float rssi_float_;
       uint8_t current_processed_packet_ID_;
       std::size_t optimum_MT_NBR_;

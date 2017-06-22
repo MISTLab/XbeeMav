@@ -174,6 +174,7 @@ The node xbee_mav provides a ROS service xbee_status that will return informatio
 about the xbee module. The information returned depends on the argument passed to
 the service (example: rosservice call /xbee_status "param_id: 'ARGUMENT'"). The different arguments that can be passed are described below:
 * id : Returns the xbee module short identifier.
+* deque_full : returns 1 if the out messages queue is full and 0 otherwise
 * rssi : Returns the average Received Signal Strength Indicator (RSSI). This RSSI value could be inaccurate since the average is obtained by getting the RSSI of the last message at a fixed frequency without any information about the sender.
 * trig_rssi_api_avg : Triggers a link testing procedure to obtain the RSSI with all the known nodes in the network. Returns false if there is no other node connected to the network.
 * trig_rssi_api_ID (where ID should be replaced by a number): Triggers a link testing procedure to obtain the RSSI with the corresponding ID. Returns false if the node is not present on the network.
