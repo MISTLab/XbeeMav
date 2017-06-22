@@ -9,6 +9,13 @@
  * Author: Pierre-Yves Breches
  */
 /* ------------------------------------------------------------------------- */
+/* TODO
+ *  * Split PacketsHandler class (the last two could be instantiated by the first one)
+ *    * class PacketsHandler
+ *    * class PacketsLossHandler
+ *    * class APIRssiHandler
+ */
+
 
 #include"PacketsHandler.h"
 
@@ -20,10 +27,11 @@ namespace Mist
 namespace Xbee
 {
 
+const uint8_t PacketsHandler::ALL_IDS = 0xFF;
+const uint16_t PacketsHandler::PACKET_LOSS_UNAVAILABLE = 0xFFFF;
 
 //*****************************************************************************
 PacketsHandler::PacketsHandler():
-  PACKET_LOSS_UNAVAILABLE(0xFFFF),
   MAX_PACEKT_SIZE(64000),
   XBEE_NETWORK_MTU(250),
   FRAGMENT_HEADER_SIZE(6),
@@ -138,10 +146,10 @@ void PacketsHandler::Process_Fragment(std::shared_ptr<std::string> fragment)
       static_cast<uint16_t>(static_cast<unsigned char>(fragment->at(5))));
 
   assembly_map_it_ = packets_assembly_map_.find(node_8_bits_address);
-  packet_loss_it = packet_loss_map.find(node_8_bits_address);
+  packet_loss_it_ = packet_loss_map_.find(node_8_bits_address);
 
-  if (packet_loss_it != packet_loss_map.end())
-    packet_loss_it->second.received_packets_ = packet_loss_it->second.received_packets_ + 1;
+  if (packet_loss_it_ != packet_loss_map_.end())
+    packet_loss_it_->second.received_packets_ = packet_loss_it_->second.received_packets_ + 1;
 
   if (assembly_map_it_ != packets_assembly_map_.end())
   {
@@ -301,15 +309,7 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
 
     if (command_response[2] == static_cast<unsigned char>(0)) // TO DO check this
     {
-      new_node_address = static_cast<uint64_t>(
-      static_cast<uint64_t>(command_response[5]) << 56 |
-      static_cast<uint64_t>(command_response[6]) << 48 |
-      static_cast<uint64_t>(command_response[7]) << 40 |
-      static_cast<uint64_t>(command_response[8]) << 32 |
-      static_cast<unsigned char>(command_response[9]) << 24 |
-      static_cast<unsigned char>(command_response[10]) << 16 |
-      static_cast<unsigned char>(command_response[11]) << 8 |
-      static_cast<unsigned char>(command_response[12]));
+      new_node_address = get64BitsAddress(command_response, 5);
     }
 
     database_addresses_it_ = database_addresses_.find(new_node_address);
@@ -348,33 +348,7 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
   }
   else if (command_response[0] == 'R' && command_response[1] == 'S')
   {
-    uint64_t new_node_address = static_cast<uint64_t>(
-                                    static_cast<uint64_t>(command_response[2]) << 56 |
-                                    static_cast<uint64_t>(command_response[3]) << 48 |
-                                    static_cast<uint64_t>(command_response[4]) << 40 |
-                                    static_cast<uint64_t>(command_response[5]) << 32 |
-                                    static_cast<unsigned char>(command_response[6]) << 24 |
-                                    static_cast<unsigned char>(command_response[7]) << 16 |
-                                    static_cast<unsigned char>(command_response[8]) << 8 |
-                                    static_cast<unsigned char>(command_response[9]));
-
-    database_addresses_it_ = database_addresses_.find(new_node_address);
-
-    if (database_addresses_it_ != database_addresses_.end())
-    {
-       RSSI_Result result ={ucharToUint16(command_response[10], command_response[11]),
-                            ucharToUint16(command_response[12], command_response[13]),
-                            ucharToUint16(command_response[14], command_response[15]),
-                            ucharToUint16(command_response[16], command_response[17]),
-                            static_cast<uint8_t>(command_response[18]),
-                            static_cast<uint8_t>(command_response[19]),
-                            static_cast<uint8_t>(command_response[20]),
-                            static_cast<uint8_t>(command_response[21]),
-                            static_cast<uint8_t>(command_response[22])
-                          };
-       rssi_result_map_[database_addresses_it_->second] = result;
-    }
-
+    processAPIRssi(command_response);
   }
   else
   {
@@ -382,6 +356,46 @@ void PacketsHandler::Process_Command_Response(const char* command_response)
   }
 }
 
+//*****************************************************************************
+void PacketsHandler::processAPIRssi(const char* command_response)
+{
+  uint64_t node_address = get64BitsAddress(command_response, 2);
+
+  database_addresses_it_ = database_addresses_.find(node_address);
+  if (database_addresses_it_ != database_addresses_.end())
+  {
+    rssi_result_map_it_ = rssi_result_map_.find(database_addresses_it_->second);
+    if(rssi_result_map_it_ == rssi_result_map_.end())
+    {
+      RSSI_Result result ={ucharToUint16(command_response[10], command_response[11]),
+                           ucharToUint16(command_response[12], command_response[13]),
+                           ucharToUint16(command_response[14], command_response[15]),
+                           ucharToUint16(command_response[16], command_response[17]),
+                           static_cast<uint8_t>(command_response[18]),
+                           static_cast<uint8_t>(command_response[19]),
+                           static_cast<uint8_t>(command_response[20]),
+                           static_cast<uint8_t>(command_response[21]),
+                           static_cast<uint8_t>(command_response[22]),
+                           NEW_VALUE
+                         };
+      rssi_result_map_[database_addresses_it_->second] = result;
+    }
+    else
+    {
+      rssi_result_map_it_->second.payload_size = ucharToUint16(command_response[10], command_response[11]);
+      rssi_result_map_it_->second.iterations = ucharToUint16(command_response[12], command_response[13]);
+      rssi_result_map_it_->second.success = ucharToUint16(command_response[14], command_response[15]);
+      rssi_result_map_it_->second.retries = ucharToUint16(command_response[16], command_response[17]);
+      rssi_result_map_it_->second.result = static_cast<uint8_t>(command_response[18]);
+      rssi_result_map_it_->second.rr = static_cast<uint8_t>(command_response[19]);
+      rssi_result_map_it_->second.max_rssi = static_cast<uint8_t>(command_response[20]);
+      rssi_result_map_it_->second.min_rssi = static_cast<uint8_t>(command_response[21]);
+      rssi_result_map_it_->second.avg_rssi = static_cast<uint8_t>(command_response[22]);
+      rssi_result_map_it_->second.status = NEW_VALUE;
+    }
+
+  }
+}
 
 //*****************************************************************************
 void PacketsHandler::Quit()
@@ -459,7 +473,7 @@ void PacketsHandler::Process_Out_Standard_Messages()
       Generate_Transmit_Request_Frame(out_message->c_str(), &frame, out_message->size());
       serial_device_->Send_Frame(frame);
 
-      for (auto& it:packet_loss_map)
+      for (auto& it:packet_loss_map_)
       {
         it.second.sent_packets_ = it.second.sent_packets_ + 1;
       }
@@ -671,7 +685,7 @@ void PacketsHandler::Transmit_Fragments(const std::vector<std::string>& frames)
   for (auto index: fragments_indexes_to_transmit_)
   {
     serial_device_->Send_Frame(frames.at(index));
-    for (auto& it:packet_loss_map)
+    for (auto& it:packet_loss_map_)
     {
       it.second.sent_packets_ = it.second.sent_packets_ + 1;
     }
@@ -721,24 +735,16 @@ void PacketsHandler::Deserialize_Mavlink_Message(const char * bytes,
 
   for (std::size_t i = 2; i < msg_size; i += 8)
   {
-    current_int64 = (
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i])) << 56 |
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 1])) << 48 |
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 2])) << 40 |
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 3])) << 32 |
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 4])) << 24 |
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 5])) << 16 |
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 6])) << 8 |
-    static_cast<uint64_t>(static_cast<unsigned char>(bytes[i + 7])));
+    current_int64 = get64BitsAddress(bytes, i);
 
     mavlink_msg->payload64.push_back(current_int64);
   }
 
-  packet_loss_it = packet_loss_map.find(mavlink_msg->sysid);
+  packet_loss_it_ = packet_loss_map_.find(mavlink_msg->sysid);
 
-  if (packet_loss_it != packet_loss_map.end())
+  if (packet_loss_it_ != packet_loss_map_.end())
   {
-    packet_loss_it->second.received_packets_ = packet_loss_it->second.received_packets_ + 1;
+    packet_loss_it_->second.received_packets_ = packet_loss_it_->second.received_packets_ + 1;
   }
   else
   {
@@ -746,8 +752,8 @@ void PacketsHandler::Deserialize_Mavlink_Message(const char * bytes,
     if (database_addresses_inv_it_ != database_addresses_inv_.end())
     {
       uint64_t long_address = database_addresses_inv_it_->second;
-      packet_loss_map.insert(std::pair<uint8_t, On_Line_Node_S>(mavlink_msg->sysid,
-                                                                {long_address, 0.0, 0.0, 0, 0, 0, 0}));
+      packet_loss_map_.insert(std::pair<uint8_t, On_Line_Node_S>(mavlink_msg->sysid,
+                                                                 {long_address, 0.0, 0.0, 0, 0, 0, 0}));
     }
   }
 }
@@ -764,34 +770,108 @@ float PacketsHandler::getSignalStrength()
 }
 
 //*****************************************************************************
-uint16_t PacketsHandler::getRawPacketLoss(int8_t short_node_id)
+float PacketsHandler::getAPISignalStrength(uint8_t short_node_id)
 {
-  packet_loss_it = packet_loss_map.find(short_node_id);
-
-  if (packet_loss_it != packet_loss_map.end()){
-    return packet_loss_map[short_node_id].packet_loss_raw_;
+  float result = 0;
+  int nb_node = 0;
+  if(short_node_id == ALL_IDS)
+  {
+    for (auto& it:rssi_result_map_)
+    {
+      if(it.second.status == NEW_VALUE &&
+         it.second.result == 0x00)
+      {
+        nb_node++;
+        result += static_cast<float>(it.second.avg_rssi);
+        it.second.status = OLD_VALUE;
+      }
+    }
+    if(nb_node != 0)
+    {
+      result =  static_cast<float>(result / nb_node);
+    }
   }
-  else {
-    return PACKET_LOSS_UNAVAILABLE;
+  else
+  {
+    rssi_result_map_it_ = rssi_result_map_.find(short_node_id);
+    if(rssi_result_map_it_ != rssi_result_map_.end())
+    {
+      if(rssi_result_map_it_->second.status == NEW_VALUE &&
+         rssi_result_map_it_->second.result == 0x00)
+      {
+        result = static_cast<float>(rssi_result_map_it_->second.avg_rssi);
+        rssi_result_map_it_->second.status = OLD_VALUE;
+      }
+    }
+  }
+  return result;
+}
+
+//*****************************************************************************
+float PacketsHandler::getRawPacketLoss(uint8_t short_node_id)
+{
+  if(short_node_id == ALL_IDS)
+  {
+    int count = 0;
+    float result = 0;
+    for(const auto& it:packet_loss_map_)
+    {
+      result += it.second.packet_loss_raw_;
+      count++;
+    }
+    if(count != 0)
+    {
+      return result / static_cast<float>(count);
+    }
+    else {return PACKET_LOSS_UNAVAILABLE;}
+  }
+  else
+  {
+    packet_loss_it_ = packet_loss_map_.find(short_node_id);
+
+    if (packet_loss_it_ != packet_loss_map_.end())
+    {
+      return packet_loss_map_[short_node_id].packet_loss_raw_;
+    }
+    else {return PACKET_LOSS_UNAVAILABLE;}
   }
 }
 
 //*****************************************************************************
-uint16_t PacketsHandler::getPacketLoss(int8_t short_node_id)
+float PacketsHandler::getPacketLoss(uint8_t short_node_id)
 {
-  packet_loss_it = packet_loss_map.find(short_node_id);
-
-  if (packet_loss_it != packet_loss_map.end()){
-    return packet_loss_map[short_node_id].packet_loss_filtered_;
+  if(short_node_id == ALL_IDS)
+  {
+    int count = 0;
+    float result = 0;
+    for(const auto& it:packet_loss_map_)
+    {
+      result += it.second.packet_loss_filtered_;
+      count++;
+    }
+    if(count != 0)
+    {
+      return result / static_cast<float>(count);
+    }
+    else {return PACKET_LOSS_UNAVAILABLE;}
   }
-  else {
-    return PACKET_LOSS_UNAVAILABLE;
-  }
+  else
+  {
+    packet_loss_it_ = packet_loss_map_.find(short_node_id);
 
+    if (packet_loss_it_ != packet_loss_map_.end())
+    {
+      return packet_loss_map_[short_node_id].packet_loss_filtered_;
+    }
+    else {return PACKET_LOSS_UNAVAILABLE;}
+  }
 }
 
 //*****************************************************************************
 void PacketsHandler::triggerRssiUpdate()
+/* Description: function sending the AT commad DB to the Xbee module.
+ *
+ ------------------------------------------------------------------ */
 {
   std::string frame;
   Generate_AT_Command(RSSI_COMMAND.c_str(), &frame);
@@ -800,15 +880,20 @@ void PacketsHandler::triggerRssiUpdate()
 
 //*****************************************************************************
 uint8_t PacketsHandler::triggerAPIRssiUpdate(uint16_t rssi_payload_size,
-                                          uint16_t rssi_iterations,
-                                          uint8_t target_id)
+                                             uint16_t rssi_iterations,
+                                             uint8_t target_id)
+/* Description: Function triggering the link testing function described
+ *    pages 29-30 in Ressources/XbeeModule_Datasheet.pdf
+ *    The packet_loss_map_ is used to know which nodes are connected
+ *    instead of the connected_network_nodes_ since the latest is only
+ *    updated when a Ping is sent.
+ ------------------------------------------------------------------ */
 {
-  static const uint8_t ALL_IDS = 0xFF;
   uint8_t sent_request = 0;
 
   if(target_id == ALL_IDS)
   {
-    for (const auto& it:connected_network_nodes_)
+    for (const auto& it:packet_loss_map_)
     {
       std::string frame;
       generateLinkTestingFrame(&frame, rssi_payload_size,
@@ -817,20 +902,49 @@ uint8_t PacketsHandler::triggerAPIRssiUpdate(uint16_t rssi_payload_size,
                                database_addresses_inv_[it.first]);
       serial_device_->Send_Frame(frame);
       sent_request++;
+
+      rssi_result_map_it_ = rssi_result_map_.find(it.first);
+      if(rssi_result_map_it_ == rssi_result_map_.end())
+      {
+        RSSI_Result result ={rssi_payload_size, rssi_iterations, 0, 0, 0,
+                             0, 0, 0, 0, TRIGGERED};
+        rssi_result_map_[database_addresses_it_->second] = result;
+      }
+      else
+      {
+        rssi_result_map_it_->second.payload_size = rssi_payload_size;
+        rssi_result_map_it_->second.iterations = rssi_iterations;
+        rssi_result_map_it_->second.avg_rssi = TRIGGERED;
+      }
+
     }
   }
   else
   {
-    connected_network_nodes_it_ = connected_network_nodes_.find(target_id);
-    if(connected_network_nodes_it_ != connected_network_nodes_.end())
+    packet_loss_it_ = packet_loss_map_.find(target_id);
+    if(packet_loss_it_ != packet_loss_map_.end())
     {
       std::string frame;
       generateLinkTestingFrame(&frame, rssi_payload_size,
                                rssi_iterations,
                                device_64_bits_address_,
-                               database_addresses_inv_[connected_network_nodes_it_->first]);
+                               database_addresses_inv_[packet_loss_it_->first]);
       serial_device_->Send_Frame(frame);
       sent_request++;
+
+      rssi_result_map_it_ = rssi_result_map_.find(target_id);
+      if(rssi_result_map_it_ == rssi_result_map_.end())
+      {
+        RSSI_Result result ={rssi_payload_size, rssi_iterations, 0, 0, 0,
+                             0, 0, 0, 0, TRIGGERED};
+        rssi_result_map_[database_addresses_it_->second] = result;
+      }
+      else
+      {
+        rssi_result_map_it_->second.payload_size = rssi_payload_size;
+        rssi_result_map_it_->second.iterations = rssi_iterations;
+        rssi_result_map_it_->second.avg_rssi = TRIGGERED;
+      }
     }
   }
 
@@ -858,20 +972,20 @@ void PacketsHandler::processPacketLoss(const char* packet_loss)
     static_cast<uint16_t>(static_cast<unsigned char>(packet_loss[3])));
   uint8_t packet_loss_msg_id = static_cast<uint8_t>(packet_loss[4]);
 
-  packet_loss_it = packet_loss_map.find(source_ID);
+  packet_loss_it_ = packet_loss_map_.find(source_ID);
 
-  if (packet_loss_it != packet_loss_map.end())
+  if (packet_loss_it_ != packet_loss_map_.end())
   {
-    if (packet_loss_msg_id == packet_loss_it->second.packet_loss_received_id_)
+    if (packet_loss_msg_id == packet_loss_it_->second.packet_loss_received_id_)
     {
-      packet_loss_it->second.packet_loss_received_id_ = (packet_loss_it->second.packet_loss_received_id_ + 1) % MAX_PACKET_LOSS_MSG_ID;
-      updatePacketLoss(packet_loss_it->second, received_packet_from_me);
+      packet_loss_it_->second.packet_loss_received_id_ = (packet_loss_it_->second.packet_loss_received_id_ + 1) % MAX_PACKET_LOSS_MSG_ID;
+      updatePacketLoss(packet_loss_it_->second, received_packet_from_me);
     }
     else
     {
       // Missed a packet(s) loss msg, thus we resynchronize the id
-      packet_loss_it->second.packet_loss_received_id_ = (packet_loss_msg_id + 1) % MAX_PACKET_LOSS_MSG_ID;
-      printf("Resynchronized %i\n", packet_loss_it->second.packet_loss_received_id_);
+      packet_loss_it_->second.packet_loss_received_id_ = (packet_loss_msg_id + 1) % MAX_PACKET_LOSS_MSG_ID;
+      printf("Resynchronized %i\n", packet_loss_it_->second.packet_loss_received_id_);
     }
   }
   else
@@ -880,7 +994,7 @@ void PacketsHandler::processPacketLoss(const char* packet_loss)
     if (database_addresses_inv_it_ != database_addresses_inv_.end())
     {
       uint64_t long_address = database_addresses_inv_it_->second;
-      packet_loss_map.insert(std::pair<uint8_t, On_Line_Node_S>(source_ID,
+      packet_loss_map_.insert(std::pair<uint8_t, On_Line_Node_S>(source_ID,
                                                                 {long_address, 0.0, 0.0, 0, 0, 0, 0}));
     }
   }
@@ -906,13 +1020,6 @@ void PacketsHandler::updatePacketLoss(On_Line_Node_S& node, const uint16_t recei
       node.packet_loss_filtered_ = filterIIR(node.packet_loss_raw_,
                                              node.packet_loss_filtered_,
                                              PACKET_LOSS_FILTER_GAIN);
-      // TODO: To be removed once tested
-      /*printf("Packet loss: raw:%f, filter:%f, sent:%i, recieved:%i, source_id:%i\n",
-             node.packet_loss_raw_,
-             node.packet_loss_filtered_,
-             node.sent_packets_,
-             received_packet,
-             database_addresses_[node.device_64_bits_address_]);*/
     }
     else
     {
@@ -933,7 +1040,7 @@ void PacketsHandler::updatePacketLoss(On_Line_Node_S& node, const uint16_t recei
 //*****************************************************************************
 void PacketsHandler::sendPacketLoss()
 {
-  for (auto& it:packet_loss_map)
+  for (auto& it:packet_loss_map_)
   {
     std::string packet_loss_message = PACKET_LOSS_IDENTIFIER;
     std::string packet_loss_frame;
@@ -966,6 +1073,20 @@ uint16_t PacketsHandler::ucharToUint16(unsigned char msb, unsigned char lsb)
  ------------------------------------------------------------------ */
  {
    return (static_cast<uint16_t>(msb)<<8) + static_cast<uint16_t>(lsb);
+ }
+
+ inline uint64_t PacketsHandler::get64BitsAddress(const char* bytes,
+                                                  const int offset)
+ {
+    return (
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset])) << 56 |
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset + 1])) << 48 |
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset + 2])) << 40 |
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset + 3])) << 32 |
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset + 4])) << 24 |
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset + 5])) << 16 |
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset + 6])) << 8 |
+      static_cast<uint64_t>(static_cast<unsigned char>(bytes[offset + 7])));
  }
 
 }

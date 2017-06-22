@@ -78,6 +78,9 @@ target_link_libraries(xbee_config xbee_setup ${catkin_LIBRARIES})
 add_executable(test_buzz src/TestBuzz.cpp)
 target_link_libraries(test_buzz ${catkin_LIBRARIES})
 
+add_executable(test_buzz_cyclic src/TestBuzzCyclic.cpp)
+target_link_libraries(test_buzz_cyclic ${catkin_LIBRARIES})
+
 #############
 ## Install ##
 #############

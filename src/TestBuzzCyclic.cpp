@@ -77,12 +77,12 @@ int main(int argc, char **argv) {
   Init_Random_Seed();
 
   int count = 0;
-  const std::size_t MAX_BUFFER_SIZE = 64;
-  char line[MAX_BUFFER_SIZE];
+  // const std::size_t MAX_BUFFER_SIZE = 64;
+  // char line[MAX_BUFFER_SIZE];
 
   std::cout << "Press Enter to Send New Mavlink Message..." << std::endl;
 
-  while (ros::ok() && std::cin.getline(line, MAX_BUFFER_SIZE))
+  while (ros::ok()) //&& std::cin.getline(line, MAX_BUFFER_SIZE))
   {
 
     unsigned int payload_size =
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     loop_rate.sleep();
 
     count++;
-    std::cout << "Press Enter to Send New Mavlink Message..." << std::endl;
+    // std::cout << "Press Enter to Send New Mavlink Message..." << std::endl;
   }
 
   return 0;

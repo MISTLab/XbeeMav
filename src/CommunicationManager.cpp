@@ -24,7 +24,9 @@ CommunicationManager::CommunicationManager() :
   START_DLIMITER(static_cast<unsigned char>(0x7E)),
   LOOP_RATE(10), /* 10 fps */
   DEFAULT_RATE_DIVIDER_RSSI(5),
-  DEFAULT_RATE_DIVIDER_PACKET_LOSS(20)
+  DEFAULT_RATE_DIVIDER_PACKET_LOSS(20),
+  DEFAULT_RSSI_PAYLOAD_SIZE(10),
+  DEFAULT_RSSI_ITERATIONS(2)
 {
 }
 
@@ -326,21 +328,68 @@ bool CommunicationManager::Get_Param (mavros_msgs::ParamGet::Request& req,
   {
     val.integer=packets_handler_.getDeviceId();
   }
+  /////////////////////////////////////////////////////////
+  // RSSI Section
   else if(req.param_id == "rssi")
   {
     val.real=packets_handler_.getSignalStrength();
+  }
+  else if(req.param_id == "trig_rssi_api_avg")
+  {
+    if(packets_handler_.triggerAPIRssiUpdate(rssi_payload_size_,
+                                             rssi_iterations_,
+                                             PacketsHandler::ALL_IDS) == 0)
+    {
+      res.success = false;
+    }
+  }
+  else if (safeSubStr(req.param_id, 14) == "trig_rssi_api_")
+  {
+    int short_id = std::strtol(req.param_id.substr(14).c_str(), NULL, 10);
+    if(packets_handler_.triggerAPIRssiUpdate(rssi_payload_size_,
+                                             rssi_iterations_,
+                                             static_cast<uint8_t>(short_id)) == 0)
+    {
+      res.success = false;
+    }
+  }
+  else if (req.param_id == "get_rssi_api_avg")
+  {
+    val.real = packets_handler_.getAPISignalStrength(PacketsHandler::ALL_IDS);
+    if(val.real == 0){res.success = false;}
+  }
+  else if (safeSubStr(req.param_id, 13) == "get_rssi_api_")
+  {
+    int short_id = std::strtol(req.param_id.substr(13).c_str(), NULL, 10);
+    val.integer = short_id;
+    val.real = packets_handler_.getAPISignalStrength(static_cast<uint8_t>(short_id));
+    if(val.real == 0){res.success = false;}
+  }
+  /////////////////////////////////////////////////////////
+  // Packet loss Section
+  else if (req.param_id == "pl_raw_avg")
+  {
+    val.real = packets_handler_.getRawPacketLoss(PacketsHandler::ALL_IDS);
+    if(val.real == PacketsHandler::PACKET_LOSS_UNAVAILABLE){res.success = false;}
   }
   else if (safeSubStr(req.param_id, 7) == "pl_raw_")
   {
     int short_id = std::strtol(req.param_id.substr(7).c_str(), NULL, 10);
     val.integer = short_id;
-    val.real=packets_handler_.getRawPacketLoss(short_id);
+    val.real = packets_handler_.getRawPacketLoss(static_cast<uint8_t>(short_id));
+    if(val.real == PacketsHandler::PACKET_LOSS_UNAVAILABLE){res.success = false;}
+  }
+  else if (req.param_id == "pl_filtered_avg")
+  {
+    val.real = packets_handler_.getPacketLoss(PacketsHandler::ALL_IDS);
+    if(val.real == PacketsHandler::PACKET_LOSS_UNAVAILABLE){res.success = false;}
   }
   else if (safeSubStr(req.param_id, 12) == "pl_filtered_")
   {
     int short_id = std::strtol(req.param_id.substr(12).c_str(), NULL, 10);
     val.integer = short_id;
-    val.real = packets_handler_.getPacketLoss(short_id);
+    val.real = packets_handler_.getPacketLoss(static_cast<uint8_t>(short_id));
+    if(val.real == PacketsHandler::PACKET_LOSS_UNAVAILABLE){res.success = false;}
   }
   else
   {
@@ -362,6 +411,7 @@ bool CommunicationManager::getRosParams()
   bool success_get_param_in_topic = false;
   bool success_get_param_out_topic = false;
   StatusSrv_ = node_handle_.advertiseService("/xbee_status", &CommunicationManager::Get_Param, this);
+
   if (node_handle_.getParam("Xbee_In_From_Buzz", out_messages_topic))
   {
     mavlink_subscriber_ = node_handle_.subscribe(out_messages_topic.c_str(), 1000,
@@ -384,22 +434,26 @@ bool CommunicationManager::getRosParams()
     std::cout << "Failed to Get Topic Name: param 'Xbee_Out_To_Buzz' Not Found." << std::endl;
   }
 
-  int temp_param;
-  if(node_handle_.getParam("rate_divider_rssi", temp_param)){
-    rate_divider_rssi_ = static_cast<uint8_t>(temp_param);
-  }
-  else{
-    rate_divider_rssi_ = DEFAULT_RATE_DIVIDER_RSSI;
-  }
-
-  if(node_handle_.getParam("rate_divider_packet_loss_", temp_param)){
-    rate_divider_packet_loss_ = static_cast<uint8_t>(temp_param);
-  }
-  else {
-    rate_divider_packet_loss_ = DEFAULT_RATE_DIVIDER_PACKET_LOSS;
-  }
+  rate_divider_rssi_ = static_cast<uint8_t>(getIntParam("rate_divider_rssi", DEFAULT_RSSI_ITERATIONS));
+  rate_divider_packet_loss_ = static_cast<uint8_t>(getIntParam("rate_divider_packet_loss_", DEFAULT_RSSI_ITERATIONS));
+  rssi_payload_size_ = static_cast<uint16_t>(getIntParam("rssi_payload_size", DEFAULT_RSSI_ITERATIONS));
+  rssi_iterations_ = static_cast<uint16_t>(getIntParam("rssi_iterations", DEFAULT_RSSI_ITERATIONS));
 
   return success_get_param_in_topic && success_get_param_out_topic;
+}
+
+//*****************************************************************************
+int  CommunicationManager::getIntParam(std::string name, int default_value)
+{
+  int temp_param;
+  if(node_handle_.getParam(name, temp_param))
+  {
+    return temp_param;
+  }
+  else
+  {
+    return default_value;
+  }
 }
 
 //*****************************************************************************

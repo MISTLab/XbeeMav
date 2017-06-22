@@ -58,6 +58,13 @@ namespace Xbee
     uint8_t packet_loss_received_id_;
   };
 
+  enum RSSI_API_STATUS
+  {
+    OLD_VALUE,
+    TRIGGERED,
+    NEW_VALUE
+  };
+
   struct RSSI_Result
   {
     uint16_t payload_size;
@@ -69,8 +76,8 @@ namespace Xbee
     uint8_t max_rssi;
     uint8_t min_rssi;
     uint8_t avg_rssi;
+    RSSI_API_STATUS status;
   };
-
 
   //*****************************************************************************
   class PacketsHandler
@@ -92,8 +99,9 @@ namespace Xbee
                                        mavros_msgs::Mavlink* mavlink_msg, const std::size_t msg_size);
       uint8_t getDeviceId();
       float getSignalStrength();
-      uint16_t getRawPacketLoss(int8_t short_node_id);
-      uint16_t getPacketLoss(int8_t short_node_id);
+      float getAPISignalStrength(uint8_t short_node_id);
+      float getRawPacketLoss(uint8_t short_node_id);
+      float getPacketLoss(uint8_t short_node_id);
       void triggerRssiUpdate();
       uint8_t triggerAPIRssiUpdate(uint16_t rssi_payload_size,
                                    uint16_t rssi_iterations,
@@ -103,7 +111,8 @@ namespace Xbee
 
       static uint16_t ucharToUint16(unsigned char msb, unsigned char lsb);
 
-      const uint16_t PACKET_LOSS_UNAVAILABLE;
+      static const uint16_t PACKET_LOSS_UNAVAILABLE;
+      static const uint8_t ALL_IDS;
 
     private:
       const std::size_t MAX_PACEKT_SIZE;   /* MAX packet size in bytes = 63750 bytes */
@@ -147,6 +156,8 @@ namespace Xbee
   		float computePercentage(const int16_t numerator, const int16_t denumerator) const;
       float filterIIR(const float new_val, const float old_val, const float gain) const;
   		void updatePacketLoss(On_Line_Node_S& node, const uint16_t recieved_packet);
+      void processAPIRssi(const char* command_response);
+      uint64_t get64BitsAddress(const char* bytes, const int offset);
 
       std::set<uint8_t> fragments_indexes_to_transmit_;
       SerialDevice* serial_device_;
@@ -162,9 +173,10 @@ namespace Xbee
       std::map<uint64_t, uint8_t>::iterator database_addresses_it_;
       std::map<uint8_t, uint64_t> database_addresses_inv_;
       std::map<uint8_t, uint64_t>::iterator database_addresses_inv_it_;
-      std::map<uint8_t, On_Line_Node_S> packet_loss_map;
-      std::map<uint8_t, On_Line_Node_S>::iterator packet_loss_it;
+      std::map<uint8_t, On_Line_Node_S> packet_loss_map_;
+      std::map<uint8_t, On_Line_Node_S>::iterator packet_loss_it_;
       std::map<uint8_t, RSSI_Result> rssi_result_map_;
+      std::map<uint8_t, RSSI_Result>::iterator rssi_result_map_it_;
 
       std::mutex mutex_;
       uint8_t device_address_;

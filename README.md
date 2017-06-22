@@ -93,7 +93,7 @@ The configuration will be loaded from "Resources/Xbee_Config.xml". Most of the e
 
 We consider the following setup (**Fig.1**). The block (Drone + Manifold) can be replaced by any Desktop/Laptop meeting the prerequisites.
 
-**Fig.1:** Experimental Setup:
+**Fig.1:** Experimental Setup:  
 ![fig1](Resources/Fig1.png)
 
 One of the drones will behave as a Master while the other one will act as a Slave. The Master drone will send commands to the Slave drone.
@@ -111,7 +111,7 @@ Each drone is running a dummy flight controller node "test_controller". Accordin
 | 23	| Start Mission |
 
 
-**Fig.2:** ROS nodes running on the drone:
+**Fig.2:** ROS nodes running on the drone:  
 ![fig2](Resources/Fig2.png)
 
 The communication between both drones is performed with Xbees. The “xbee_mav” node (**Fig.2**) will handle all communications with other ROS nodes (test_controller(Flight Controller) or test_buzz (ROS Buzz)) and the connected Xbee device. Therefore, both Xbees must be configured for Digi-Mesh with the maximum baud rate (230400).
@@ -166,14 +166,20 @@ You can download the real nodes by clicking on the correspondent link:
   * ros_buzz : (https://github.com/MISTLab/ROSBuzz.git)
 
 To run drones in SWARM mode you need to:
-  1. Comment the following lines in “xbee_ros_node/CMakeLists.txt”:
+  1. Build the three packages.
+  2. Run a launch file that will start the flight_controller, ros_buzz and xbee_mav. The "xbee_mav" should run in SWARM mode. The drone type (Master/Slave) is not needed.
 
-        add_executable(config src/main.cpp src/XbeeModule.cpp src/XMLConfigParser.cpp)
-        target_link_libraries(config ${catkin_LIBRARIES})
-        add_executable(test_controller src/TestController.cpp)
-        target_link_libraries(test_controller ${catkin_LIBRARIES})
-        add_executable(test_buzz src/TestBuzz.cpp)
-        target_link_libraries(test_buzz ${catkin_LIBRARIES})
-
-  2. Build the three packages.
-  3. Run the launch file (this will run the flight_controller, ros_buzz and xbee_mav). The "xbee_mav" should run in SWARM mode. The drone type (Master/Slave) is not needed.
+## ROS services
+The node xbee_mav provides a ROS service xbee_status that will return information
+about the xbee module. The information returned depends on the argument passed to
+the service (example: rosservice call /xbee_status "param_id: 'ARGUMENT'"). The different arguments that can be passed are described below:
+* id : Returns the xbee module short identifier.
+* rssi : Returns the average Received Signal Strength Indicator (RSSI). This RSSI value could be inaccurate since the average is obtained by getting the RSSI of the last message at a fixed frequency without any information about the sender.
+* trig_rssi_api_avg : Triggers a link testing procedure to obtain the RSSI with all the known nodes in the network. Returns false if there is no other node connected to the network.
+* trig_rssi_api_ID (where ID should be replaced by a number): Triggers a link testing procedure to obtain the RSSI with the corresponding ID. Returns false if the node is not present on the network.
+* get_rssi_api_avg : Returns the average of the average RSSI results of the link testing procedures.
+* get_rssi_api_ID (where ID should be replaced by a number): Returns the average RSSI result of the link testing procedure.
+* pl_raw_avg : Returns the average of the raw packet loss value among the connected nodes. Returns false if there is no other node connected to the network.
+* pl_raw_ID (where ID should be replaced by a number): Returns the raw packet loss value between this node and the node ID. Returns false if the node is not present on the network.
+* pl_filter_avg : same thing as pl_raw_avg but for the filtered value.
+* pl_filter_ID (where ID should be replaced by a number): same thing as pl_raw_ID but for the filtered value.
