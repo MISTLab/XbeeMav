@@ -2,7 +2,7 @@
 
 <XBeeConfig>
     <Settings>
-		<Parameter Command="CM" Description="Channel Mask">00FFFFFFFFFFFF7FFF</Parameter>
+		<Parameter Command="CM" Description="Channel Mask">00FFFFFFFFFFF7FFFF</Parameter>
 		<Parameter Command="HP" Description="Preamble ID">1</Parameter>
 		<Parameter Command="ID" Description="Network ID">5FFF</Parameter>
 		<Parameter Command="MT" Description="Broadcast Multi-Transmits">3</Parameter>
@@ -22,7 +22,7 @@
 		<Parameter Command="CI" Description="Cluster ID">11</Parameter>
 		<Parameter Command="EE" Description="Encryption Enbale">0</Parameter>
 		<Parameter Command="KY" Description="Encryption Key"></Parameter>
-		<Parameter Command="BD" Description="Baud Rate">7</Parameter>
+		<Parameter Command="BD" Description="Baud Rate">8</Parameter>
 		<Parameter Command="NB" Description="Parity">0</Parameter>
 		<Parameter Command="SB" Description="Stop Bits">0</Parameter>
 		<Parameter Command="RO" Description="Packetization Timeout">3</Parameter>
