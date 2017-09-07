@@ -150,7 +150,8 @@ void CommunicationManager::Run_In_Swarm_Mode()
   {
 
     ros::Rate loop_rate(LOOP_RATE);
-
+    ros::AsyncSpinner spinner(4); // Use 4 threads
+    spinner.start();
     while (ros::ok())
     {
       triggerRssiUpdate();
@@ -161,9 +162,11 @@ void CommunicationManager::Run_In_Swarm_Mode()
       Process_Packet_Loss();
       Process_Command_Responses();
       packets_handler_.Delete_Packets_With_Time_Out();
-      ros::spinOnce();
+      //ros::spinOnce();
+      
       loop_rate.sleep();
     }
+    ros::waitForShutdown();
   }
 }
 
