@@ -45,7 +45,22 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
 
-    setupXBee(device, static_cast<std::size_t>(baud_rate));
+    bool start_by_setup;
+    if (!node_handle.getParam("start_by_setup", start_by_setup))
+    {
+      std::cout << "Failed to Get Topic Name: param 'start_by_setup' not Found. The setup won't be done" << std::endl;
+    }
+    else
+    {
+      if(start_by_setup)
+      {
+        setupXBee(device, static_cast<std::size_t>(baud_rate));
+      }
+      else
+      {
+        // Do nothing
+      }
+    }
 
     if (communication_manager.Init(device, static_cast<std::size_t>(baud_rate)))
     {

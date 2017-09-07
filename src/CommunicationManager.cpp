@@ -166,7 +166,7 @@ void CommunicationManager::Run_In_Swarm_Mode()
       
       loop_rate.sleep();
     }
-    ros::waitForShutdown();
+    spinner.stop();
   }
 }
 
