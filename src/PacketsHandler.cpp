@@ -466,12 +466,11 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 //*****************************************************************************
 bool PacketsHandler::Load_Database_Addresses()
 {
-	const std::string FILE_PATH = "/home/ubuntu/ROS_WS/src/xbeemav/Resources/database.xml";
-	
-	
+	const std::string FILE_PATH = DATABASE_PATH;
+
 	if (!boost::filesystem::exists(FILE_PATH))
 	{	
-		std::cout << "database.xml Not Found." << std::endl;
+		std::cout << "database.xml Not Found with path: " << FILE_PATH << std::endl;
 		return false;
 	}
 	

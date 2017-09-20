@@ -14,10 +14,11 @@ int main(int argc, char* argv[])
   try
   {
 	ros::init(argc, argv, "xbee");
+	ros::NodeHandle node_handle;
 
 	Mist::Xbee::CommunicationManager communication_manager;
-	const std::string& device = "/dev/ttyUSB0"; // TO DO can be introduced as command.
-	const std::size_t baud_rate = 230400; // TO DO Can be introduced as command.
+	std::string device;
+	double baud_rate;
 	Mist::Xbee::CommunicationManager::DRONE_TYPE drone_type = 
 			Mist::Xbee::CommunicationManager::DRONE_TYPE::SLAVE;
 	Mist::Xbee::CommunicationManager::RUNNING_MODE running_mode =
@@ -34,8 +35,18 @@ int main(int argc, char* argv[])
 				running_mode = Mist::Xbee::CommunicationManager::RUNNING_MODE::SWARM;
 		}
 	}
-	
-	if (communication_manager.Init(device, baud_rate))
+	if (!node_handle.getParam("USB_port", device))
+     	{
+       		std::cout << "Failed to Get Topic Name: param 'USB_port' Not Found." << std::endl;
+       		return EXIT_FAILURE;
+     	}
+
+     	if (!node_handle.getParam("Baud_rate", baud_rate))
+     	{
+       		std::cout << "Failed to Get Topic Name: param 'Baud_rate' Not Found." << std::endl;
+       		return EXIT_FAILURE;
+     	}
+	if (communication_manager.Init(device, static_cast<std::size_t>(baud_rate)))
 		communication_manager.Run(drone_type, running_mode);
   }
   catch (const std::exception& e)
