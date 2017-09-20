@@ -2,7 +2,7 @@
 
 <XBeeConfig>
     <Settings>
-		<Parameter Command="CM" Description="Channel Mask">00FFFFFFFFFFFF7FFF</Parameter>
+		<Parameter Command="CM" Description="Channel Mask">00FFFFFFFFFFF7FFFF</Parameter>
 		<Parameter Command="HP" Description="Preamble ID">1</Parameter>
 		<Parameter Command="ID" Description="Network ID">5FFF</Parameter>
 		<Parameter Command="MT" Description="Broadcast Multi-Transmits">3</Parameter>
