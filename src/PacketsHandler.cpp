@@ -553,48 +553,45 @@ void PacketsHandler::Send_End_Of_Packet_Ping(const uint8_t packet_ID, const uint
 //*****************************************************************************
 bool PacketsHandler::Load_Database_Addresses()
 {
-  const std::string FILE_PATH = DATABASE_PATH;
+	const std::string FILE_PATH = DATABASE_PATH;
 
-
-  if (!boost::filesystem::exists(FILE_PATH))
-  {
-    std::cout << "database.xml Not Found with path: "
-              << FILE_PATH << std::endl;
-    return false;
-  }
-
-  ptree pt;
-  boost::property_tree::read_xml(FILE_PATH, pt);
-  std::string short_address;
-  std::string address_64_bits;
-  unsigned int short_address_int;
-  uint64_t address_64_bits_int;
-
-  BOOST_FOREACH(ptree::value_type const&v, pt.get_child("Addresses"))
-  {
-    if (v.first == "Device")
-    {
-      short_address = v.second.get<std::string>("<xmlattr>.Address");
-      address_64_bits = v.second.data();
-
-      if (sscanf(short_address.c_str(), "%3u", &short_address_int) < 0)
-      {
-        std::cout << "Short Address Error. Please Check database.xml For Possible Errors." << std::endl;
-        return false;
-      }
-
-      if (sscanf(address_64_bits.c_str(), "%" SCNx64, &address_64_bits_int) < 0)
-      {
-        std::cout << "64 bits Address Error. Please Check database.xml For Possible Errors." << std::endl;
-        return false;
-      }
-
-      database_addresses_.insert(std::pair<uint64_t, uint8_t>(address_64_bits_int, static_cast<uint8_t>(short_address_int)));
-      database_addresses_inv_.insert(std::pair<uint8_t, uint64_t>(static_cast<uint8_t>(short_address_int), address_64_bits_int));
-    }
-  }
-
-  return true;
+	if (!boost::filesystem::exists(FILE_PATH))
+	{	
+		std::cout << "database.xml Not Found with path: " << FILE_PATH << std::endl;
+		return false;
+	}
+	
+	ptree pt;
+	boost::property_tree::read_xml(FILE_PATH, pt);
+	std::string short_address;
+	std::string address_64_bits;
+	unsigned int short_address_int;
+	uint64_t address_64_bits_int;
+	
+	BOOST_FOREACH(ptree::value_type const&v, pt.get_child("Addresses"))
+	{
+		if (v.first == "Device")
+		{
+			short_address = v.second.get<std::string>("<xmlattr>.Address");
+			address_64_bits = v.second.data();
+			
+			if (sscanf(short_address.c_str(), "%3u", &short_address_int) < 0)
+			{
+				std::cout << "Short Address Error. Please Check database.xml For Possible Errors." << std::endl;
+				return false;
+			}
+			
+			if (sscanf(address_64_bits.c_str(), "%" SCNx64, &address_64_bits_int) < 0)
+			{
+				std::cout << "64 bits Address Error. Please Check database.xml For Possible Errors." << std::endl;
+				return false;
+			}
+			
+			database_addresses_.insert(std::pair<uint64_t, uint8_t>(address_64_bits_int, static_cast<uint8_t>(short_address_int)));
+		}
+	}
+	
+	return true;
 }
 
 

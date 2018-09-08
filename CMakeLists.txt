@@ -44,11 +44,10 @@ DEPENDS Boost
 ###########
 ## Build ##
 ###########
-
 ## Add definitions
 add_definitions(
--DDATABASE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/Resources/database.xml"
--DXBEE_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/Resources/XBee_Config.xml"
+  -DDATABASE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/Resources/database.xml"
+  -DXBEE_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/Resources/XBee_Config.xml"
 )
 
 ## Specify additional locations of header files
