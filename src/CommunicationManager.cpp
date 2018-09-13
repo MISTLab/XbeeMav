@@ -414,7 +414,7 @@ bool CommunicationManager::getRosParams()
   std::string in_messages_topic;
   bool success_get_param_in_topic = false;
   bool success_get_param_out_topic = false;
-  StatusSrv_ = node_handle_.advertiseService("/xbee_status", &CommunicationManager::Get_Param, this);
+  StatusSrv_ = node_handle_.advertiseService("xbee_status", &CommunicationManager::Get_Param, this);
 
   if (node_handle_.getParam("Xbee_In_From_Buzz", out_messages_topic))
   {
