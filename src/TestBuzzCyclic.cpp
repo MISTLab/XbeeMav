@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
   }
 
   ros::ServiceClient xbeestatus_srv;
-  xbeestatus_srv = node_handle.serviceClient<mavros_msgs::ParamGet>("/xbee_status");
+  xbeestatus_srv = node_handle.serviceClient<mavros_msgs::ParamGet>("/network_status");
   mavros_msgs::ParamGet::Request robot_id_srv_request; robot_id_srv_request.param_id="id";
   mavros_msgs::ParamGet::Response robot_id_srv_response;
   while(!xbeestatus_srv.call(robot_id_srv_request,robot_id_srv_response)){
