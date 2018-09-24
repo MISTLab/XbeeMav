@@ -17,5 +17,7 @@
     <Device Address= "14" >0013A2004156FA60</Device>
     <Device Address= "15" >0013A2004156FA61</Device>
     <Device Address= "16" >0013A2004156FA57</Device>
-
+    <Device Address= "17" >0013A200417DFE1D</Device>
+    <Device Address= "18" >0013A200417DFE2B</Device>
+    <Device Address= "19" >0013A200417DFE04</Device>
 </Addresses>
