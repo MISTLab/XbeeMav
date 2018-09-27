@@ -417,9 +417,19 @@ bool CommunicationManager::getRosParams()
   StatusSrv_ = node_handle_.advertiseService("network_status", 
                                              &CommunicationManager::Get_Param, this);
 
+  if (node_handle_.getParam("status_service", out_messages_topic))
+  {
+    StatusSrv_ = node_handle_.advertiseService(out_messages_topic.c_str(),
+                                                 &CommunicationManager::Get_Param, this);
+  }
+  else
+  {
+    std::cout << "Failed to Get Status Service Name: param 'status_service' Not Found." << std::endl;
+  }
+  
   if (node_handle_.getParam("Xbee_In_From_Buzz", out_messages_topic))
   {
-    mavlink_subscriber_ = node_handle_.subscribe(out_messages_topic.c_str(), 1000,
+    mavlink_subscriber_ = node_handle_.subscribe(out_messages_topic.c_str(), 100,
                                                  &CommunicationManager::Send_Mavlink_Message_Callback, this);
     success_get_param_in_topic = true;
   }
@@ -431,7 +441,7 @@ bool CommunicationManager::getRosParams()
   if (node_handle_.getParam("Xbee_Out_To_Buzz", in_messages_topic))
   {
     mavlink_publisher_ = node_handle_.advertise<mavros_msgs::Mavlink>(
-      in_messages_topic.c_str(), 1000);
+      in_messages_topic.c_str(), 100);
     success_get_param_out_topic = true;
   }
   else
