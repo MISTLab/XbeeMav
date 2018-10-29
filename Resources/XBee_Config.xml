@@ -63,6 +63,5 @@
 		<Parameter Command="CC" Description="Commande Sequence Character">2B</Parameter>
 		<Parameter Command="CT" Description="Command Mode Time Out">60</Parameter>
 		<Parameter Command="GT" Description="Guard Time">3E8</Parameter>
-		<Parameter Command="DD" Description="Device Type Identifier">B0000</Parameter>
     </Settings>
 </XBeeConfig>
