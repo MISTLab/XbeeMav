@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
 
-    setupXBee(device, static_cast<std::size_t>(baud_rate));
+    //setupXBee(device, static_cast<std::size_t>(baud_rate));
 
     if (communication_manager.Init(device, static_cast<std::size_t>(baud_rate)))
     {

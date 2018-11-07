@@ -26,7 +26,7 @@ int main(int argc, char*argv[])
     else
       sscanf(argv[2], "%u", &baud_rate);
 
-    setupXBee(device_port, baud_rate);
+    //setupXBee(device_port, baud_rate);
   }
   catch (const std::exception& e)
   {
