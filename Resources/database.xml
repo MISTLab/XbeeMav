@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Addresses>
+	<!-- Pro 900 -->
 		<Device Address= "1"  >0013A20040D8CA1E</Device>
 		<Device Address= "2"  >0013A200415278B8</Device>
 		<Device Address= "3"  >0013A2004103B363</Device>
@@ -20,7 +21,15 @@
     <Device Address= "17" >0013A200417DFE1D</Device>
     <Device Address= "18" >0013A200417DFE2B</Device>
     <Device Address= "19" >0013A200417DFE04</Device>
+	<!-- SX 900 -->
     <Device Address= "20" >0013A20041795D68</Device>
     <Device Address= "21" >0013A20041795E68</Device>
     <Device Address= "22" >0013A2004178AF0E</Device>
+	<!-- SX 868 -->
+    <Device Address= "23" >0013A200418AE48C</Device>
+    <Device Address= "24" >0013A200418AE491</Device>
+    <Device Address= "25" >0013A200418AE46A</Device>
+    <Device Address= "26" >0013A200418AE27A</Device>
+    <Device Address= "27" >0013A200418AE4C8</Device>
+    <Device Address= "28" >0013A200418AE279</Device>
 </Addresses>
