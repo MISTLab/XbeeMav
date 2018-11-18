@@ -21,6 +21,9 @@
     <Device Address= "17" >0013A200417DFE1D</Device>
     <Device Address= "18" >0013A200417DFE2B</Device>
     <Device Address= "19" >0013A200417DFE04</Device>
+    <Device Address= "20" >0013A20041795D68</Device>
+    <Device Address= "21" >0013A20041795E68</Device>
+    <Device Address= "22" >0013A2004178AF0E</Device>
 	<!-- SX 900 -->
     <Device Address= "20" >0013A20041795D68</Device>
     <Device Address= "21" >0013A20041795E68</Device>
