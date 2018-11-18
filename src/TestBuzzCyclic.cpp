@@ -36,8 +36,8 @@ void Init_Random_Seed() { srand(time(NULL)); }
 
 //*****************************************************************************
 int main(int argc, char **argv) {
-  const unsigned int MIN_PAYLOAD_SIZE = 1;
-  const unsigned int MAX_PAYLOAD_SIZE = 5;
+  const unsigned int MIN_PAYLOAD_SIZE = 10;
+  const unsigned int MAX_PAYLOAD_SIZE = 32;
   const int DEFAULT_RATE = 10;
   int rate = DEFAULT_RATE;
 
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
   }
 
   ros::ServiceClient xbeestatus_srv;
-  xbeestatus_srv = node_handle.serviceClient<mavros_msgs::ParamGet>("/network_status");
+  xbeestatus_srv = node_handle.serviceClient<mavros_msgs::ParamGet>("network_status");
   mavros_msgs::ParamGet::Request robot_id_srv_request; robot_id_srv_request.param_id="id";
   mavros_msgs::ParamGet::Response robot_id_srv_response;
   while(!xbeestatus_srv.call(robot_id_srv_request,robot_id_srv_response)){
@@ -95,9 +95,9 @@ int main(int argc, char **argv) {
 
     std::cout << "Sent Mavlink Message  " << count << std::endl;
 
-    for (unsigned int i = 0; i < payload_size; i++) {
+    /*for (unsigned int i = 0; i < payload_size; i++) {
       std::cout << mavlink_msg_.payload64.at(i) << std::endl;
-    }
+    }*/
 
     std::cout << std::endl;
 

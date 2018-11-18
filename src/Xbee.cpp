@@ -47,6 +47,8 @@ int main(int argc, char *argv[]) {
 
     //setupXBee(device, static_cast<std::size_t>(baud_rate));
 
+    std::cout << "Going to init !!!!" << std::endl;
+
     if (communication_manager.Init(device, static_cast<std::size_t>(baud_rate)))
     {
       communication_manager.Run(drone_type, running_mode);
