@@ -1,0 +1,16 @@
+<launch>
+	<arg name="port" default="/dev/ttyUSB0"/>
+	<!--  xmee_mav Drone type and Commununication Mode -->
+	<!-- node pkg="xbee_ros_node" type="xbee_mav" name="xbee_mav" args="master solo" output="screen" -->
+	<node pkg="xbee_ros_node" type="xbee_mav" name="xbee_mav" args="master swarm" output="screen" launch-prefix="gdb -ex run --args"/>
+	<!-- node pkg="xbee_ros_node" type="xbee_mav" name="xbee_mav" args="slave solo" output="screen" -->
+	<!--node pkg="xbee_ros_node" type="xbee_mav" name="xbee_mav" args="slave swarm" output="screen" -->
+	<!--  xmee_mav Topics and Services Names -->
+	<param name="Xbee_In_From_Buzz" type="str" value="outMavlink" />
+	<param name="Xbee_Out_To_Buzz" type="str" value="inMavlink" />
+	<param name="Xbee_In_From_Controller" type="str" value="xbee_cmd" />
+	<param name="Xbee_Out_To_Controller" type="str" value="mav_dji_cmd" />
+	<param name="USB_port" type="str" value="$(arg port)" />
+	<param name="status_service" type="str" value="network_status" />
+	<param name="Baud_rate" type="double" value="230400" />
+</launch>
