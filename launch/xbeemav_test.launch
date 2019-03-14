@@ -1,0 +1,27 @@
+<launch>
+<group ns="receiver">
+	<include file="$(find xbee_ros_node)/launch/xbeemav.launch" />
+	  <include file="$(find rosbuzz)/launch/rosbuzz.launch" >
+		<arg name="xbee_plugged" value="true"/>
+		<arg name="script" value="main"/>
+		<arg name="setmode" value="true"/> 
+    <arg name="latitude" value="29.020237"/> 
+    <arg name="longitude" value="-13.710779"/> 
+	</include>
+</group>
+
+<group ns="sender">
+	<!-- node pkg="xbee_ros_node" type="test_buzz_cyclic" name="xbee_mav_test" output="screen" /-->
+	<include file="$(find xbee_ros_node)/launch/xbeemav.launch">
+		<arg name="port" default="/dev/ttyUSB1" />
+	</include>
+
+	  <include file="$(find rosbuzz)/launch/rosbuzz.launch" >
+		<arg name="xbee_plugged" value="true"/>
+		<arg name="script" value="main"/>
+		<arg name="setmode" value="true"/> 
+    <arg name="latitude" value="29.020237"/> 
+    <arg name="longitude" value="-13.710779"/> 
+	</include>
+</group>
+</launch>

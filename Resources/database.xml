@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Addresses>
+	<!-- SX 868 
+    <Device Address= "23" >0013A200418AE48C</Device>
+    <Device Address= "24" >0013A200418AE491</Device>
+    <Device Address= "25" >0013A200418AE46A</Device>
+    <Device Address= "26" >0013A200418AE27A</Device>
+    <Device Address= "27" >0013A200418AE4C8</Device>
+    <Device Address= "28" >0013A200418AE279</Device>
+    -->
+	<!-- Pro 900 -->
 		<Device Address= "1"  >0013A20040D8CA1E</Device>
-		<Device Address= "2"  >0013A200415278B8</Device>
+		<Device Address= "24"  >0013A200415278B8</Device>
 		<Device Address= "3"  >0013A2004103B363</Device>
 		<Device Address= "4"  >0013A200415278AD</Device>
-		<Device Address= "5"  >0013A2004103B356</Device>
+		<Device Address= "25"  >0013A2004103B356</Device>
 		<Device Address= "6"  >0013A200415278B7</Device>
 		<Device Address= "7"  >0013A2004098A7A7</Device>
 		<Device Address= "8"  >0013A2004098A7BA</Device>
-		<Device Address= "9"  >0013A200415A9DDD</Device>
+		<Device Address= "26"  >0013A200415A9DDD</Device>
 		<Device Address= "10" >0013A200415A9DE4</Device>
 		<Device Address= "11" >0013A200415A9DDF</Device>
 		<Device Address= "12" >0013A200415A9DDE</Device>
-		<Device Address= "13" >0013A200415A9DE8</Device>
-
+		<Device Address= "27" >0013A200415A9DE8</Device>
+    <Device Address= "28" >0013A2004156FA60</Device>
+    <Device Address= "15" >0013A2004156FA61</Device>
+    <Device Address= "16" >0013A2004156FA57</Device>
+    <Device Address= "17" >0013A200417DFE1D</Device>
+    <Device Address= "18" >0013A200417DFE2B</Device>
+    <Device Address= "19" >0013A200417DFE04</Device>
+    <Device Address= "20" >0013A20041795D68</Device>
+    <Device Address= "21" >0013A20041795E68</Device>
+    <Device Address= "22" >0013A2004178AF0E</Device>
+	<!-- SX 900 -->
+    <Device Address= "20" >0013A20041795D68</Device>
+    <Device Address= "21" >0013A20041795E68</Device>
+    <Device Address= "22" >0013A2004178AF0E</Device>
 </Addresses>

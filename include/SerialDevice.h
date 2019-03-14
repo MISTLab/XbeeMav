@@ -9,7 +9,7 @@
 
 #include<deque>
 #include<iostream>
-#include<memory> 
+#include<memory>
 
 #include<boost/asio.hpp>
 
@@ -49,10 +49,17 @@ public:
 	void Set_In_Messages_Pointers(Thread_Safe_Deque* in_std_messages,
 			Thread_Safe_Deque* in_fragments,
 			Thread_Safe_Deque* in_Acks_and_Pings,
-			Thread_Safe_Deque* command_responses);
+			Thread_Safe_Deque* command_responses,
+		  Thread_Safe_Deque* in_packet_loss);
 	bool Is_IO_Service_Stopped(); // TO DO delete this function
 	void Reset_IO_Service(); // TO DO delete this function
 	void Close_Serial_Port();
+
+	const char FRAGMENT_MSG_ID        = 'F';
+	const char ACKNOWLEDGEMENT_MSG_ID = 'A';
+	const char PING_MSG_ID            = 'P';
+	const char STANDARD_MSG_ID        = 'S';
+	const char PACKET_LOSS_MSG_ID     = 'L';
 
 private:
 
@@ -88,6 +95,8 @@ private:
 	Thread_Safe_Deque* in_fragments_;
 	Thread_Safe_Deque* in_Acks_and_Pings_;
 	Thread_Safe_Deque* command_responses_;
+	Thread_Safe_Deque* in_packet_loss_;
+
 	Mist::Xbee::Frame current_frame_;
 	unsigned int FRAME_TYPE_KEYS[REMOTE_AT_COMMAND_RESPONSE + 1];
 };

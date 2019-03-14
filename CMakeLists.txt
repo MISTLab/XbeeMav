@@ -34,12 +34,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## catkin specific configuration ##
 ###################################
 
-
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES xbee_ros_node
-  CATKIN_DEPENDS roscpp std_msgs mavros_msgs
-#  DEPENDS system_lib
+INCLUDE_DIRS include
+LIBRARIES xbee_setup
+CATKIN_DEPENDS roscpp std_msgs mavros_msgs
+DEPENDS Boost
 )
 
 ###########
@@ -53,24 +52,33 @@ add_definitions(
 
 ## Specify additional locations of header files
 include_directories(
-  include ${xbee_ros_node_INCLUDE_DIRS}
+  include
+  ${xbee_ros_node_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${BOOST_INCLUDEDIR}
 )
 
+add_library(xbee_setup
+  src/XBeeSetup.cpp
+  src/XBeeModule.cpp
+  src/XMLConfigParser.cpp
+)
 
+add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler src/frame_generators.cpp)
+target_link_libraries(xbee_mav xbee_setup ${catkin_LIBRARIES})
 
-add_executable(xbee_mav src/Xbee.cpp src/XBeeFrame.cpp src/SerialDevice.cpp  src/CommunicationManager.cpp src/PacketsHandler)
-target_link_libraries(xbee_mav ${catkin_LIBRARIES})
-
-add_executable(xbee_config src/main.cpp src/XBeeModule.cpp src/XMLConfigParser.cpp)
-target_link_libraries(xbee_config ${catkin_LIBRARIES})
+add_executable(xbee_config src/XMLConfigParser.cpp src/main.cpp)
+target_link_libraries(xbee_config xbee_setup ${catkin_LIBRARIES})
 
 #add_executable(test_controller src/TestController.cpp)
 #target_link_libraries(test_controller ${catkin_LIBRARIES})
 
-
 add_executable(test_buzz src/TestBuzz.cpp)
 target_link_libraries(test_buzz ${catkin_LIBRARIES})
+
+add_executable(test_buzz_cyclic src/TestBuzzCyclic.cpp)
+target_link_libraries(test_buzz_cyclic ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -81,4 +89,3 @@ target_link_libraries(test_buzz ${catkin_LIBRARIES})
 #############
 ## Testing ##
 #############
-
